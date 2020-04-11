@@ -266,7 +266,7 @@ export default class Player1 {
       if (key.isDown) {
         if (!this.stamps.hasOwnProperty(key.code)) {
           this.stamps[key.code] = {
-            startTime: time *= 1000,
+            startTime: time,
             startPosition: this.Object3D.position
           }
         }
@@ -286,9 +286,18 @@ export default class Player1 {
     if (this.key.left.isDown) {
       const { startTime, startPosition } = this.stamps[this.key.left.code]
       const passedTime = currentTime - startTime
-      this.Object3D.position.x = startPosition.x + (this.speed / 100000) * passedTime
+      const distance = (this.speed * 1) * passedTime
+      this.Object3D.position.x = startPosition.x - distance
+      console.error('passedTime', passedTime, 'distance', distance, 'startPosition', startPosition.x, 'currentPosition', this.Object3D.position.x)
     }
-    if (this.key.right.isDown) this.Object3D.position.x += this.speed
+    if (this.key.right.isDown) {
+      const { startTime, startPosition } = this.stamps[this.key.right.code]
+      const passedTime = currentTime - startTime
+      const distance = (this.speed * 1) * passedTime
+      // console.error('passedTime', passedTime, 'distance', distance)
+      this.Object3D.position.x = startPosition.x + distance
+    }
+    // if (this.key.right.isDown) this.Object3D.position.x += this.speed
   }
   get activeAction () {
     return this._activeAction

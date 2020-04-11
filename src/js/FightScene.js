@@ -178,7 +178,7 @@ export default class FightScene {
       this.player2.handleRotationSwitch(this.player1.position.x)
       this.renderer.render(this.scene, this.camera)
     }
-    gsap.ticker.fps(5)
+    // gsap.ticker.fps(60)
     // gsap.ticker.lagSmoothing(0)
     gsap.ticker.add(render)
     // render()
