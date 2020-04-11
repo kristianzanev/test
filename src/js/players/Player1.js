@@ -45,11 +45,13 @@ export default class Player1 {
       }
     }
     this.timeline = gsap.timeline()
+    this.stamps = {}
 
     this.init()
   }
   init () {
-    gsap.ticker.lagSmoothing(0) // for not pausing rendering when swicting tabs
+    // gsap.ticker.useRAF(false) //makes ticker using setTimout for frames intead of requestAnimationframe. Also used for not pausing when switching between tabs// a wise solution is to switch between these mods when user switches
+    // gsap.ticker.lagSmoothing(0) // for not pausing rendering when swiching tabs, its bad because if theres fps drop there will be no smoothing of animations
     this.setActionNames()
     this.setPosition() // for setting position and rotation
     this.mixActions()
@@ -258,9 +260,35 @@ export default class Player1 {
     }
   }
 
-  updatePosition (speed = this.speed) {
-    if (this.key.left.isDown) this.Object3D.position.x -= speed
-    if (this.key.right.isDown) this.Object3D.position.x += speed
+  _addKeyStamps (time) {
+    for (const property in this.key) {
+      const key = this.key[property]
+      if (key.isDown) {
+        if (!this.stamps.hasOwnProperty(key.code)) {
+          this.stamps[key.code] = {
+            startTime: time *= 1000,
+            startPosition: this.Object3D.position
+          }
+        }
+      } else {
+        if (this.stamps.hasOwnProperty(key.code)) {
+          delete this.stamps[key.code]
+        }
+      }
+    }
+  }
+
+  updatePosition (time) {
+    this._addKeyStamps(time)
+    this._handleMovement(time)
+  }
+  _handleMovement (currentTime) {
+    if (this.key.left.isDown) {
+      const { startTime, startPosition } = this.stamps[this.key.left.code]
+      const passedTime = currentTime - startTime
+      this.Object3D.position.x = startPosition.x + (this.speed / 100000) * passedTime
+    }
+    if (this.key.right.isDown) this.Object3D.position.x += this.speed
   }
   get activeAction () {
     return this._activeAction

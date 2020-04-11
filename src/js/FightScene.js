@@ -2,6 +2,7 @@
 import Player1 from './players/Player1'
 import Player2 from './players/Player2'
 import CollisionEngine from './utils/CollisionEngine'
+import { gsap } from 'gsap'
 
 const THREE = window.THREE = require('three')
 require('three/examples/js/loaders/FBXLoader')
@@ -148,7 +149,7 @@ export default class FightScene {
     })
     // window.fpsCap = 60
     window.intervalRender = 60
-    const render = () => {
+    const render = (time) => {
       // if (window.fpsCap) {
       //   // eslint-disable-next-line no-inner-declarations
       //   const slowanimate = () => {
@@ -162,24 +163,28 @@ export default class FightScene {
       // requestAnimationFrame(render)
       this.objScene.forEach(({ mixer, clock }) => mixer.update(clock.getDelta()))
       const collidedPlayers = this.collisionEngine.getCollidedPlayers() // there are always be 2 collided elements
+      // console.error('time', time, 'delta', delta)
 
       if (collidedPlayers) {
-        console.warn(collidedPlayers.player1.activeAction.getClip().name)
+        // console.warn(collidedPlayers.player1.activeAction.getClip().name)
         collidedPlayers.player1.handleCollisionMovement(collidedPlayers.player2)
         collidedPlayers.player2.handleCollisionMovement(collidedPlayers.player1)
       } else {
-        this.player1.updatePosition()
-        this.player2.updatePosition()
+        this.player1.updatePosition(time)
+        this.player2.updatePosition(time)
       }
 
       this.player1.handleRotationSwitch(this.player2.position.x)
       this.player2.handleRotationSwitch(this.player1.position.x)
       this.renderer.render(this.scene, this.camera)
     }
+    gsap.ticker.fps(5)
+    // gsap.ticker.lagSmoothing(0)
+    gsap.ticker.add(render)
     // render()
 
-    setInterval(() => {
-      render()
-    }, 1000 / window.intervalRender)
+    // setInterval(() => {
+    //   render()
+    // }, 1000 / window.intervalRender)
   }
 }
