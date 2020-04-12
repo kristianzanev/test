@@ -1,4 +1,4 @@
-# real-world-vue
+# fighter game
 
 ## Project setup
 ```
