@@ -279,6 +279,7 @@ export default class Player1 {
               x: this.Object3D.position.x,
               y: this.Object3D.position.y
             }
+            //, currentStamps: Object.assign({}, this.stamps)
           }
         }
       } else {
@@ -288,21 +289,50 @@ export default class Player1 {
       }
     }
   }
+  _updateTargetedKeyStamps (time) {
+    const timeStampInfo = {
+      startTime: time,
+      startPosition: {
+        x: this.Object3D.position.x,
+        y: this.Object3D.position.y
+      }
+      //, currentStamps: Object.assign({}, this.stamps)
+    }
+    if (this.stamps.hasOwnProperty(this.key.left.code)) {
+      this.stamps[this.key.left.code] = timeStampInfo
+    }
+
+    if (this.stamps.hasOwnProperty(this.key.right.code)) {
+      this.stamps[this.key.right.code] = timeStampInfo
+    }
+  }
 
   updatePosition (time) {
     this._addKeyStamps(time)
     this._handleMovement(time)
   }
   _handleMovement (currentTime) {
+    if (this.key.left.isDown && this.key.right.isDown) {
+      this._updateTargetedKeyStamps(currentTime)
+
+      return
+    }
+
     if (this.key.left.isDown) {
+      if (this.key.right.isDown) return
       const { startTime, startPosition } = this.stamps[this.key.left.code]
-      const passedTime = currentTime - startTime// time is in secs but I need it to ms
+
+      const passedTime = currentTime - startTime
       const distance = (this.speed * Config.moveMultiplier) * passedTime
       this.Object3D.position.x = startPosition.x - distance
       // console.error('passedTime', passedTime, 'distance', distance, 'startPosition', startPosition.x, 'currentPosition', this.Object3D.position.x)
     }
+
     if (this.key.right.isDown) {
+      if (this.key.left.isDown) return
+
       const { startTime, startPosition } = this.stamps[this.key.right.code]
+
       const passedTime = currentTime - startTime
       const distance = (this.speed * Config.moveMultiplier) * passedTime
       // console.error('passedTime', passedTime, 'distance', distance)

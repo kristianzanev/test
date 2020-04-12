@@ -2,6 +2,9 @@
  * @description - you can add Players in this engine and it will take their hitbox_guide mesh
  * and update their boundingBox then it will check if there's collision between the updated bboxes.
  */
+const Config = {
+  hitGuide: 'boundingBox_guide'
+}
 export default class CollissionEngine {
   constructor ({
     THREEVector3,
@@ -53,7 +56,7 @@ export default class CollissionEngine {
   }
 
   _collisionElementFactory (player) {
-    const meshGuide = player.Object3d.children.find(mesh => mesh.name === 'boundingBox_guide')
+    const meshGuide = player.Object3d.children.find(mesh => mesh.name === Config.hitGuide)
     return {
       player,
       meshGuide,
