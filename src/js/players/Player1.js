@@ -53,6 +53,7 @@ export default class Player1 {
     }
     this.timeline = gsap.timeline()
     this.stamps = {}
+    this.collision = false
 
     this.init()
   }
@@ -223,6 +224,7 @@ export default class Player1 {
     window.addEventListener('keydown', logKeyDown)
   }
   handleCollisionMovement (player2) {
+    this.collision = true
     const isMovingLeft = this.moveDirection.x < 0 // this player move directions
     const isMovingRight = this.moveDirection.x > 0 //
     const isStill = this.moveDirection.x === 0 //
@@ -233,14 +235,16 @@ export default class Player1 {
       if (isMovingRight) {
         this.position.x -= 0 // stopping this player movement
         player2.position.x += player2.currentSpeed / 4 // moving other player slowly
-      } else if (isMovingLeft) this.updatePosition()
-      else if (isStill) player2.position.x += player2.currentSpeed / 4 // moving other player slowly
+      // } else if (isMovingLeft) this.updatePosition()
+      } else if (isStill) {
+        player2.position.x += player2.currentSpeed / 4 // moving other player slowly
+      }
     } else if (isInRightSide) {
       if (isMovingLeft) {
         this.position.x -= 0
         player2.position.x -= player2.currentSpeed / 4
-      } else if (isMovingRight) this.updatePosition()
-      else if (isStill) player2.position.x -= player2.currentSpeed / 4
+        // } else if (isMovingRight) this.updatePosition()
+      } else if (isStill) player2.position.x -= player2.currentSpeed / 4
     }
   }
   handleRotationSwitch (opponentPosX) {
@@ -268,13 +272,17 @@ export default class Player1 {
     }
   }
 
-  _addKeyStamps (time) {
+  /**
+   * @description holds information on each key press for player position and when this key is pressed.
+   * Its usefull for calculating movement which is not reliant on requestAnimationFrame but on passed time.
+   */
+  _addKeyStamps () {
     for (const property in this.key) {
       const key = this.key[property]
       if (key.isDown) {
         if (!this.stamps.hasOwnProperty(key.code)) {
           this.stamps[key.code] = {
-            startTime: time,
+            startTime: this.currentTime,
             startPosition: {
               x: this.Object3D.position.x,
               y: this.Object3D.position.y
@@ -289,9 +297,9 @@ export default class Player1 {
       }
     }
   }
-  _updateTargetedKeyStamps (time) {
+  _updateTargetedKeyStamps () {
     const timeStampInfo = {
-      startTime: time,
+      startTime: this.currentTime,
       startPosition: {
         x: this.Object3D.position.x,
         y: this.Object3D.position.y
@@ -305,41 +313,53 @@ export default class Player1 {
     if (this.stamps.hasOwnProperty(this.key.right.code)) {
       this.stamps[this.key.right.code] = timeStampInfo
     }
+    // console.error(this.stamps)
   }
 
-  updatePosition (time) {
-    this._addKeyStamps(time)
-    this._handleMovement(time)
+  update (time) {
+    this.currentTime = time
+    this._addKeyStamps()
+    this._handleMovement()
   }
-  _handleMovement (currentTime) {
-    if (this.key.left.isDown && this.key.right.isDown) {
-      this._updateTargetedKeyStamps(currentTime)
+  _handleMovement () {
+    if (this.key.left.isDown && this.key.right.isDown || this.collision) {
+      this._updateTargetedKeyStamps()
 
       return
     }
 
     if (this.key.left.isDown) {
       if (this.key.right.isDown) return
-      const { startTime, startPosition } = this.stamps[this.key.left.code]
 
-      const passedTime = currentTime - startTime
-      const distance = (this.speed * Config.moveMultiplier) * passedTime
-      this.Object3D.position.x = startPosition.x - distance
-      // console.error('passedTime', passedTime, 'distance', distance, 'startPosition', startPosition.x, 'currentPosition', this.Object3D.position.x)
+      const currentPressedKey = this.key.left.code
+      const { startPosition, distanceToTravel } = this.getMovebasedOnStampInfo(currentPressedKey)
+
+      this.Object3D.position.x = startPosition.x - distanceToTravel
     }
 
     if (this.key.right.isDown) {
       if (this.key.left.isDown) return
 
-      const { startTime, startPosition } = this.stamps[this.key.right.code]
+      const currentPressedKey = this.key.right.code
+      const { startPosition, distanceToTravel } = this.getMovebasedOnStampInfo(currentPressedKey)
 
-      const passedTime = currentTime - startTime
-      const distance = (this.speed * Config.moveMultiplier) * passedTime
-      // console.error('passedTime', passedTime, 'distance', distance)
-      this.Object3D.position.x = startPosition.x + distance
+      this.Object3D.position.x = startPosition.x + distanceToTravel
     }
-    // if (this.key.right.isDown) this.Object3D.position.x += this.speed
   }
+
+  getMovebasedOnStampInfo (targetKeyCode) {
+    if (!this.stamps.hasOwnProperty(targetKeyCode)) {
+      console.warn('Hey, I need a key code for a key that is pressed!')
+      return
+    }
+    const { startTime, startPosition } = this.stamps[targetKeyCode]
+
+    const passedTime = this.currentTime - startTime
+    const distanceToTravel = (this.speed * Config.moveMultiplier) * passedTime
+    // console.error('passedTime', passedTime, 'distanceToTravel', distanceToTravel)
+    return { startPosition, distanceToTravel }
+  }
+
   get activeAction () {
     return this._activeAction
   }
