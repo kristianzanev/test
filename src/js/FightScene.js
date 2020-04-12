@@ -148,7 +148,7 @@ export default class FightScene {
       this.scene.add(new THREE.Box3Helper(el.box3, 0x00ff00)) // for green box helpers
     })
     // window.fpsCap = 60
-    window.intervalRender = 60
+    // window.intervalRender = 60
     const render = (time) => {
       // if (window.fpsCap) {
       //   // eslint-disable-next-line no-inner-declarations
@@ -178,8 +178,9 @@ export default class FightScene {
       this.player2.handleRotationSwitch(this.player1.position.x)
       this.renderer.render(this.scene, this.camera)
     }
-    // gsap.ticker.fps(60)
+    // gsap.ticker.fps(5)
     // gsap.ticker.lagSmoothing(0)
+    window.ticker = gsap.ticker // for testing purposes should be removed later
     gsap.ticker.add(render)
     // render()
 

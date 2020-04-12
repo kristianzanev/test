@@ -1,13 +1,20 @@
 /* eslint-disable no-mixed-operators */
 import { gsap } from 'gsap'
 
+const Config = {
+  speed: 7,
+  jumpLength: 200,
+  spawnPosition: -200,
+  moveMultiplier: 50
+}
+
 export default class Player1 {
-  constructor (Object3D, mixer, THREELoopOnce, speed = 7) {
+  constructor (Object3D, mixer, THREELoopOnce, speed = Config.speed) {
     this.Object3D = Object3D
     this.mixer = mixer
     this.THREELoopOnce = THREELoopOnce
     this.speed = speed
-    this.jumpLength = 200
+    this.jumpLength = Config.jumpLength
     this._activeAction = null
     this.actions = {}
     this.actionNames = null
@@ -41,7 +48,7 @@ export default class Player1 {
         opposite: { y: 4.5 }
       },
       position: {
-        x: -200
+        x: Config.spawnPosition
       }
     }
     this.timeline = gsap.timeline()
@@ -221,6 +228,7 @@ export default class Player1 {
     const isStill = this.moveDirection.x === 0 //
     const isInLeftSide = this.position.x < player2.position.x // is this player from the left side of player2
     const isInRightSide = this.position.x > player2.position.x // is this player from the right side of player2
+
     if (isInLeftSide) {
       if (isMovingRight) {
         this.position.x -= 0 // stopping this player movement
@@ -267,7 +275,10 @@ export default class Player1 {
         if (!this.stamps.hasOwnProperty(key.code)) {
           this.stamps[key.code] = {
             startTime: time,
-            startPosition: this.Object3D.position
+            startPosition: {
+              x: this.Object3D.position.x,
+              y: this.Object3D.position.y
+            }
           }
         }
       } else {
@@ -285,15 +296,15 @@ export default class Player1 {
   _handleMovement (currentTime) {
     if (this.key.left.isDown) {
       const { startTime, startPosition } = this.stamps[this.key.left.code]
-      const passedTime = currentTime - startTime
-      const distance = (this.speed * 1) * passedTime
+      const passedTime = currentTime - startTime// time is in secs but I need it to ms
+      const distance = (this.speed * Config.moveMultiplier) * passedTime
       this.Object3D.position.x = startPosition.x - distance
-      console.error('passedTime', passedTime, 'distance', distance, 'startPosition', startPosition.x, 'currentPosition', this.Object3D.position.x)
+      // console.error('passedTime', passedTime, 'distance', distance, 'startPosition', startPosition.x, 'currentPosition', this.Object3D.position.x)
     }
     if (this.key.right.isDown) {
       const { startTime, startPosition } = this.stamps[this.key.right.code]
       const passedTime = currentTime - startTime
-      const distance = (this.speed * 1) * passedTime
+      const distance = (this.speed * Config.moveMultiplier) * passedTime
       // console.error('passedTime', passedTime, 'distance', distance)
       this.Object3D.position.x = startPosition.x + distance
     }
