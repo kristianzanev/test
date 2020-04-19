@@ -14,12 +14,9 @@ export default class FightScene {
   constructor () {
     this.objScene = []
     this.modelPath = { // assets are in public folder, but are copied from webpack thats why there isn't the word 'public' in the path
-      // mmaKickNoSkin: '/animations/MmaKickNoSkin.fbx',
-      // idleSkin: '/animations/idleSkin.fbx',
-      // runningNoSkin: '/animations/RunningNoSkin.fbx',
-      // jumpingNoSkin: '/animations/JumpingNoSkin.fbx',
-      // test: '/animations/test.fbx',
-      dummy: '/animations/dummy6.fbx'
+      // dummy: '/animations/dummy6.fbx',
+      // dummy: '/animations/modelHitboxes.fbx'
+      dummy: '/animations/multiple_hiboxes_convexHull.fbx'
     }
     this.actions = {}
     this.mixer = null
@@ -144,31 +141,21 @@ export default class FightScene {
   }
 
   startAnimation () {
-    this.collisionEngine.elements.forEach(el => {
-      this.scene.add(new THREE.Box3Helper(el.box3, 0x00ff00)) // for green box helpers
+    this.collisionEngine.elements.forEach(player => {
+      player.boxes3.forEach(box3 => this.scene.add(new THREE.Box3Helper(box3, 0x00ff00)))
     })
-    // window.fpsCap = 60
-    // window.intervalRender = 60
-    const render = (time) => {
-      // if (window.fpsCap) {
-      //   // eslint-disable-next-line no-inner-declarations
-      //   const slowanimate = () => {
-      //     setTimeout(() => {
-      //       requestAnimationFrame(render)
-      //     }, 1000 / window.fpsCap)
-      //   }
-      //   slowanimate()
-      // } else requestAnimationFrame(render)
 
-      // requestAnimationFrame(render)
+    // this.collisionEngine.elements.forEach(el => {
+    //   this.scene.add(new THREE.Box3Helper(el.box3, 0x00ff00)) // for green box helpers
+    // })
+    // window.fpsCap = 60
+    const render = (time) => {
       this.objScene.forEach(({ mixer, clock }) => mixer.update(clock.getDelta()))
       const collidedPlayers = this.collisionEngine.getCollidedPlayers() // there are always be 2 collided elements
-      // console.error('time', time, 'delta', delta)
       this.player1.update(time)
       this.player2.update(time)
 
       if (collidedPlayers) {
-        // console.warn(collidedPlayers.player1.activeAction.getClip().name)
         collidedPlayers.player1.handleCollisionMovement(collidedPlayers.player2)
         collidedPlayers.player2.handleCollisionMovement(collidedPlayers.player1)
       } else {
@@ -184,10 +171,5 @@ export default class FightScene {
     // gsap.ticker.lagSmoothing(0)
     window.ticker = gsap.ticker // for testing purposes should be removed later
     gsap.ticker.add(render)
-    // render()
-
-    // setInterval(() => {
-    //   render()
-    // }, 1000 / window.intervalRender)
   }
 }

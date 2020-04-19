@@ -235,7 +235,7 @@ export default class Player1 {
       if (isMovingRight) {
         this.position.x -= 0 // stopping this player movement
         player2.position.x += player2.currentSpeed / 4 // moving other player slowly
-      // } else if (isMovingLeft) this.updatePosition()
+      // } else if (isMovingLeft) this.update()
       } else if (isStill) {
         player2.position.x += player2.currentSpeed / 4 // moving other player slowly
       }
@@ -243,7 +243,7 @@ export default class Player1 {
       if (isMovingLeft) {
         this.position.x -= 0
         player2.position.x -= player2.currentSpeed / 4
-        // } else if (isMovingRight) this.updatePosition()
+        // } else if (isMovingRight) this.update()
       } else if (isStill) player2.position.x -= player2.currentSpeed / 4
     }
   }

@@ -3,7 +3,8 @@
  * and update their boundingBox then it will check if there's collision between the updated bboxes.
  */
 const Config = {
-  hitGuide: 'boundingBox_guide'
+  hitGuide: 'hitBox'
+  // hitGuide: 'boundingBox_guide'
 }
 export default class CollissionEngine {
   constructor ({
@@ -27,8 +28,7 @@ export default class CollissionEngine {
    *  @param elements [array] with Players Classes
    */
   addElements (players) {
-    // this._elements = players.map(player => this._collisionElementFactory(player)) test this later
-    players.forEach(player => this._elements.push(this._collisionElementFactory(player)))
+    this._elements = players.map(player => this._collisionElementFactory(player))
   }
 
   getCollidedPlayers () {
@@ -41,7 +41,9 @@ export default class CollissionEngine {
         const element2 = this._elements[j]
 
         if (element1 !== element2) {
-          const isCollisionBetween2 = element1.box3.intersectsBox(element2.box3)
+          // const isCollisionBetween2 = element1.box3.intersectsBox(element2.box3)
+          const isCollisionBetween2 = element1.boxes3.some(boxA => element2.boxes3.some(boxB => boxA.intersectsBox(boxB)))
+
           if (isCollisionBetween2) {
             collidedElements = { player1: element1.player, player2: element2.player }
 
@@ -56,19 +58,29 @@ export default class CollissionEngine {
   }
 
   _collisionElementFactory (player) {
-    const meshGuide = player.Object3d.children.find(mesh => mesh.name === Config.hitGuide)
+    const meshGuides = player.Object3d.children.filter(mesh => mesh.name.includes(Config.hitGuide))
+    const boxes3 = meshGuides.map(() => new this.THREEBox3())
+
     return {
       player,
-      meshGuide,
-      box3: new this.THREEBox3()
+      meshGuides,
+      boxes3
+      // box3: new this.THREEBox3()
     }
   }
 
   _updateAllBBoxes () {
     for (let i = 0; i < this._elements.length; i++) {
       const element = this._elements[i]
-      this._updateBoundingBox(element.meshGuide, element.box3)
+
+      for (let j = 0; j < element.meshGuides.length; j++) {
+        const meshGuide = element.meshGuides[j]
+        const box3 = element.boxes3[j]
+
+        this._updateBoundingBox(meshGuide, box3)
+      }
     }
+    // this._updateBoundingBox(element.meshGuide, element.box3)
   }
 
   _updateBoundingBox (skinnedMesh, aabb) { // this is very taxing process
