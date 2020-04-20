@@ -1,3 +1,4 @@
+
 /**
  * @description - you can add Players in this engine and it will take their hitbox_guide mesh
  * and update their boundingBox then it will check if there's collision between the updated bboxes.
@@ -45,6 +46,7 @@ export default class CollissionEngine {
           const isCollisionBetween2 = element1.boxes3.some(boxA => element2.boxes3.some(boxB => boxA.intersectsBox(boxB)))
 
           if (isCollisionBetween2) {
+            console.error(this._getCollidedHitBoxes(element1.boxes3, element2.boxes3, element1.player.Object3d.name, element2.player.Object3d.name))
             collidedElements = { player1: element1.player, player2: element2.player }
 
             break
@@ -59,7 +61,11 @@ export default class CollissionEngine {
 
   _collisionElementFactory (player) {
     const meshGuides = player.Object3d.children.filter(mesh => mesh.name.includes(Config.hitGuide))
-    const boxes3 = meshGuides.map(() => new this.THREEBox3())
+    const boxes3 = meshGuides.map(mesh => {
+      const box3 = new this.THREEBox3()
+      box3.name = mesh.name
+      return box3
+    })
 
     return {
       player,
@@ -67,6 +73,26 @@ export default class CollissionEngine {
       boxes3
       // box3: new this.THREEBox3()
     }
+  }
+  _getCollidedHitBoxes (boxesA, boxesB, playerA, playerB) {
+    let result = {}
+    result[playerA] = {}
+    for (let i = 0; i < boxesA.length; i++) {
+      const boxA = boxesA[i]
+      let boxAHitResult = {}
+      boxAHitResult[playerB] = {}
+      for (let j = 0; j < boxesB.length; j++) {
+        const boxB = boxesB[j]
+        if (boxA.intersectsBox(boxB)) {
+          // const test = boxAHitResult[boxB.name] = boxB.name
+          result[playerA][boxA.name] = boxAHitResult
+          result[playerA][boxA.name][playerB][boxB.name] = boxB.name
+          // break
+        }
+      }
+      // if (result) break
+    }
+    return result
   }
 
   _updateAllBBoxes () {

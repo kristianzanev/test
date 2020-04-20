@@ -14,9 +14,9 @@ export default class FightScene {
   constructor () {
     this.objScene = []
     this.modelPath = { // assets are in public folder, but are copied from webpack thats why there isn't the word 'public' in the path
-      // dummy: '/animations/dummy6.fbx',
-      // dummy: '/animations/modelHitboxes.fbx'
-      dummy: '/animations/multiple_hiboxes_convexHull.fbx'
+      // player: '/animations/dummy6.fbx',
+      // player: '/animations/modelHitboxes.fbx'
+      player: '/animations/multiple_hiboxes_convexHull2.fbx'
     }
     this.actions = {}
     this.mixer = null
@@ -55,24 +55,24 @@ export default class FightScene {
     light.position.set(0, 100, 150)
     this.scene.add(light)
 
-    this.detectCollisionCubes = (mesh1, mesh2) => {
-      mesh1.geometry.computeBoundingBox()
-      mesh2.geometry.computeBoundingBox()
-      mesh1.updateMatrixWorld()
-      mesh2.updateMatrixWorld()
+    // this.detectCollisionCubes = (mesh1, mesh2) => {
+    //   mesh1.geometry.computeBoundingBox()
+    //   mesh2.geometry.computeBoundingBox()
+    //   mesh1.updateMatrixWorld()
+    //   mesh2.updateMatrixWorld()
 
-      const box1 = mesh1.geometry.boundingBox.clone()
-      box1.applyMatrix4(mesh1.matrixWorld)
+    //   const box1 = mesh1.geometry.boundingBox.clone()
+    //   box1.applyMatrix4(mesh1.matrixWorld)
 
-      const box2 = mesh2.geometry.boundingBox.clone()
-      box2.applyMatrix4(mesh2.matrixWorld)
+    //   const box2 = mesh2.geometry.boundingBox.clone()
+    //   box2.applyMatrix4(mesh2.matrixWorld)
 
-      return box1.intersectsBox(box2)
-    }
+    //   return box1.intersectsBox(box2)
+    // }
 
-    this.detectCollisionCubes2 = (bbox1, bbox2) => {
-      return bbox1.intersectsBox(bbox2)
-    }
+    // this.detectCollisionCubes2 = (bbox1, bbox2) => {
+    //   return bbox1.intersectsBox(bbox2)
+    // }
 
     this.init()
   }
@@ -108,7 +108,8 @@ export default class FightScene {
   loadAssets () {
     const loader = new THREE.FBXLoader(this.manager)
 
-    loader.load(this.modelPath.dummy, Object3D => { // TODO to load second player or find a way to clone the Object3D or copy and  load the file
+    loader.load(this.modelPath.player, Object3D => { // TODO to load second player or find a way to clone the Object3D or copy and  load the file
+      Object3D.name = 'player1'
       const mixer = new THREE.AnimationMixer(Object3D)
       this.player1 = new Player1(Object3D, mixer, THREE.LoopOnce)
       this.player1.Object3d.children.find(m => m.name === 'Beta_Surface').material.shininess = 10 // changing shininess of p1
@@ -118,7 +119,8 @@ export default class FightScene {
     }, undefined, error => {
       console.error(error)
     })
-    loader.load(this.modelPath.dummy, Object3D => {
+    loader.load(this.modelPath.player, Object3D => {
+      Object3D.name = 'player2'
       console.error(Object3D)
       const mixer = new THREE.AnimationMixer(Object3D)
       this.player2 = new Player2(Object3D, mixer, THREE.LoopOnce)
