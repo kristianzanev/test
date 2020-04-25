@@ -61,6 +61,7 @@ export default class Player1 {
     this.timeline = gsap.timeline()
     this.stamps = {}
     this.collision = false
+    this._playingAnim = {}
 
     this.init()
   }
@@ -69,7 +70,7 @@ export default class Player1 {
     this.setActionNames()
     this.setPosition() // for setting position and rotation
     this.mixActions()
-    this._activeAction = this.actions['idle'].play()
+    this.fadeToAction()
     this.setAnimations()
     this.handleKeyboardEvents()
   }
@@ -93,20 +94,25 @@ export default class Player1 {
       this.actions[animation.name] = this.mixer.clipAction(animation)
     })
   }
-  fadeToAction ({ name = 'idle', duration = 0.1, inReverse = false, speed = 1, isLoopOnce = false, isfreezeLastFrame = true }) {
-    let num
-    inReverse ? num = -1 * speed : num = 1 * speed
-    this._activeAction.clampWhenFinished = isfreezeLastFrame
-    const previousAction = this._activeAction
-    this._activeAction = this.actions[ name ]
-    if (previousAction !== this._activeAction) previousAction.fadeOut(duration)
-    this._activeAction.reset()
-    if (isLoopOnce) this._activeAction.setLoop(this.THREELoopOnce)
-    this._activeAction.setDuration()
-    this._activeAction.setEffectiveTimeScale(num) // num = -1 is for reversing the animation
-    this._activeAction.setEffectiveWeight(1)
-    this._activeAction.fadeIn(duration)
-    this._activeAction.play()
+  fadeToAction ({ name = 'idle', duration = 0.1, inReverse = false, speed = 1, isLoopOnce = false, isfreezeLastFrame = true } = {}) {
+    if (this._activeAction) {
+      let num
+      inReverse ? num = -1 * speed : num = 1 * speed
+      this._activeAction.clampWhenFinished = isfreezeLastFrame
+      const previousAction = this._activeAction
+      this._activeAction = this.actions[ name ]
+      if (previousAction !== this._activeAction) previousAction.fadeOut(duration)
+      this._activeAction.reset()
+      if (isLoopOnce) this._activeAction.setLoop(this.THREELoopOnce)
+      this._activeAction.setDuration()
+      this._activeAction.setEffectiveTimeScale(num) // num = -1 is for reversing the animation
+      this._activeAction.setEffectiveWeight(1)
+      this._activeAction.fadeIn(duration)
+      this._activeAction.play()
+    } else this._activeAction = this.actions['idle'].play()
+
+    this._playingAnim = { name: this._activeAction.getClip().name, inReverse }
+    console.error(this._playingAnim)
   }
   setAnimations () {
     // eslint-disable-next-line no-unused-vars
@@ -182,12 +188,18 @@ export default class Player1 {
     const logKeyDown = (event) => {
       if (event.code === this.key.right.code) {
         this.key.right.isDown = true
-        if (!this.key.right.isAlreadyPressed) { // checking if key is previously pressed
-          if (this.isAlreadyJumping) return
-          if (this.key.left.isDown) this.idle() // plays idle in case if player holds a, d keys
-          else this.moveRight()
-        }
+        // if (!this.key.right.isAlreadyPressed) { // checking if key is previously pressed
+        // if (this.isAlreadyJumping) return
+        // if (this.key.left.isDown) this.idle() // plays idle in case if player holds a, d keys
+        // else this.moveRight()
+        // }
         this.key.right.isAlreadyPressed = true
+        const shouldMoveRight = this._shouldPlayAnim(this.actionNames.running)
+        if (this.key.left.isDown) {
+          this.idle()
+          return
+        }
+        if (shouldMoveRight) this.moveRight()
       }
       if (event.code === this.key.left.code) {
         this.key.left.isDown = true
@@ -234,6 +246,14 @@ export default class Player1 {
     window.addEventListener('keyup', logKeyUp)
     window.addEventListener('keydown', logKeyDown)
   }
+
+  _shouldPlayAnim (actionName, inReverse = false) {
+    // interuptable animations (idle, running)
+    const isSameAnim = this._playingAnim.inReverse === inReverse && actionName === this._playingAnim.name
+    const canInterupt = this._playingAnim.name === this.actionNames.idle || this._playingAnim.name === this.actionNames.running
+    return !isSameAnim && canInterupt
+  }
+
   handleCollisionMovement (player2) {
     this.collision = true
     const isMovingLeft = this.moveDirection.x < 0 // this player move directions
