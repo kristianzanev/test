@@ -8,6 +8,12 @@ const Config = {
   moveMultiplier: 50
 }
 
+const States = {
+  attack: 'attack',
+  idle: 'idle',
+  defense: 'defense'
+}
+
 export default class Player1 {
   constructor (Object3D, mixer, THREELoopOnce, speed = Config.speed) {
     this.Object3D = Object3D
@@ -40,6 +46,7 @@ export default class Player1 {
         code: 'KeyG'
       }
     }
+    console.error(States)
     this.isSwitchedBefore = false
     this.isSwitchOn = false // for switching animations for the other player orientation
     this.default = {
@@ -58,7 +65,6 @@ export default class Player1 {
     this.init()
   }
   init () {
-    // gsap.ticker.useRAF(false) //makes ticker using setTimout for frames intead of requestAnimationframe. Also used for not pausing when switching between tabs// a wise solution is to switch between these mods when user switches
     // gsap.ticker.lagSmoothing(0) // for not pausing rendering when swiching tabs, its bad because if theres fps drop there will be no smoothing of animations
     this.setActionNames()
     this.setPosition() // for setting position and rotation
@@ -121,22 +127,19 @@ export default class Player1 {
     this.mmaKick = () => {
       const isKickStillPlaying = this._activeAction.getClip().name === 'mmaKick' && this._activeAction.isRunning()
       if (!isKickStillPlaying) {
-        console.time('kick')
         this.fadeToAction({ name: 'mmaKick', speed: 2, isLoopOnce: true })
         isAlreadyIdle = false
         this.mixer.addEventListener('finished', event => {
           const finishedClip = event.action.getClip()
           if (finishedClip === this._activeAction.getClip()) {
-            console.timeEnd('kick')
             this.idle()
-            this.mixer.removeEventListener('finished')
           }
+          this.mixer.removeEventListener('finished')
         })
       }
     }
     this.jump = () => {
       if (this.isAlreadyJumping === false) {
-        console.time('jump')
         const timescale = this.speed / 3
         const duration = ((this.actions.jumping.getClip().duration / timescale))
         const halfDuration = (duration / 2.2).toFixed(3) * 1 /** divided by 2.2 because of up and down in timeline
@@ -150,12 +153,20 @@ export default class Player1 {
             y: 0,
             ease: 'Power1.easeIn',
             onComplete: () => {
-              console.timeEnd('jump')
               this.isAlreadyJumping = false
-              if (this.key.left.isDown && this.key.right.isDown) this.idle() // if player holds a,d before and after jump
-              else if (this.key.right.isDown) this.moveRight()
-              else if (this.key.left.isDown) this.moveLeft()
-              else this.idle()
+              if (this.key.left.isDown && this.key.right.isDown) {
+                // console.error('playing moveRight')
+                this.idle() // if player holds a,d before and after jump
+              } else if (this.key.right.isDown) {
+                // console.error('playing moveRight')
+                this.moveRight()
+              } else if (this.key.left.isDown) {
+                // console.error('playing moveLeft')
+                this.moveLeft()
+              } else {
+                // console.error('playing idle last else')
+                this.idle()
+              }
             }
           })
       }

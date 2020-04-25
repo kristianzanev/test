@@ -46,7 +46,7 @@ export default class CollissionEngine {
           const isCollisionBetween2 = element1.boxes3.some(boxA => element2.boxes3.some(boxB => boxA.intersectsBox(boxB)))
 
           if (isCollisionBetween2) {
-            console.error(this._getCollidedHitBoxes(element1.boxes3, element2.boxes3, element1.player.Object3d.name, element2.player.Object3d.name))
+            // console.error(this._getCollidedHitBoxes(element1.boxes3, element2.boxes3, element1.player.Object3d.name, element2.player.Object3d.name))
             collidedElements = { player1: element1.player, player2: element2.player }
 
             break
