@@ -1,5 +1,5 @@
 /* eslint-disable no-mixed-operators */
-import { gsap } from 'gsap'
+import { TimelineLite, TweenLite } from 'gsap/all'
 
 const Config = {
   speed: 7,
@@ -58,10 +58,12 @@ export default class Player1 {
         x: Config.spawnPosition
       }
     }
-    this.timeline = gsap.timeline()
+    this.timeline = new TimelineLite()
+    this.moveTimeline = new TimelineLite()
     this.stamps = {}
-    this.collision = false
+    this._isAlreadyCollided = false
     this._playingAnim = {}
+    this._prevPassedTime = null
 
     this.init()
   }
@@ -112,7 +114,6 @@ export default class Player1 {
     } else this._activeAction = this.actions['idle'].play()
 
     this._playingAnim = { name: this._activeAction.getClip().name, inReverse }
-    console.error(this._playingAnim)
   }
   setAnimations () {
     // eslint-disable-next-line no-unused-vars
@@ -220,6 +221,8 @@ export default class Player1 {
         if (this.key.mmaKick.isAlreadyPressed === false) this.mmaKick()
         this.key.mmaKick.isAlreadyPressed = true
       }
+
+      this._updateTargetedKeyStamps()
     }
     const logKeyUp = (event) => {
       if (event.code === this.key.right.code) {
@@ -242,6 +245,7 @@ export default class Player1 {
         this.key.mmaKick.isDown = false
         this.key.mmaKick.isAlreadyPressed = false
       }
+      this._updateTargetedKeyStamps()
     }
     window.addEventListener('keyup', logKeyUp)
     window.addEventListener('keydown', logKeyDown)
@@ -249,13 +253,18 @@ export default class Player1 {
 
   _shouldPlayAnim (actionName, inReverse = false) {
     // interuptable animations (idle, running)
-    const isSameAnim = this._playingAnim.inReverse === inReverse && actionName === this._playingAnim.name
+    const isSameAnim = this.isSwitchOn && this.actionNames.running === actionName
+      ? this._playingAnim.inReverse !== inReverse && actionName === this._playingAnim.name
+      : this._playingAnim.inReverse === inReverse && actionName === this._playingAnim.name
+
     const canInterupt = this._playingAnim.name === this.actionNames.idle || this._playingAnim.name === this.actionNames.running
     return !isSameAnim && canInterupt
   }
 
   handleCollisionMovement (player2) {
-    this.collision = true
+    // if (!this._isAlreadyCollided) {
+    //   this._updateTargetedKeyStamps()
+    // }
     const isMovingLeft = this.moveDirection.x < 0 // this player move directions
     const isMovingRight = this.moveDirection.x > 0 //
     const isStill = this.moveDirection.x === 0 //
@@ -264,18 +273,24 @@ export default class Player1 {
 
     if (isInLeftSide) {
       if (isMovingRight) {
-        this.position.x -= 0 // stopping this player movement
-        player2.position.x += player2.currentSpeed / 4 // moving other player slowly
+        const currentPressedKey = this.key.right.code
+        const { distanceToTravel } = this.testStampMove(currentPressedKey, this.speed / 4)
+        // this.Object3D.position.x -= distanceToTravel
+        player2.position.x += distanceToTravel
+        // this.position.x -= 0 // stopping this player movement
+        // player2.position.x += player2.currentSpeed / 4 // moving other player slowly
       // } else if (isMovingLeft) this.update()
       } else if (isStill) {
-        player2.position.x += player2.currentSpeed / 4 // moving other player slowly
+        // player2.position.x += player2.currentSpeed / 4 // moving other player slowly
       }
     } else if (isInRightSide) {
       if (isMovingLeft) {
-        this.position.x -= 0
-        player2.position.x -= player2.currentSpeed / 4
+        // this.position.x -= 0
+        // player2.position.x -= player2.currentSpeed / 4
         // } else if (isMovingRight) this.update()
-      } else if (isStill) player2.position.x -= player2.currentSpeed / 4
+      } else if (isStill) {
+        // player2.position.x -= player2.currentSpeed / 4
+      }
     }
   }
   handleRotationSwitch (opponentPosX) {
@@ -288,7 +303,7 @@ export default class Player1 {
       this.isSwitchOn = true
       const switchedRotation = this.default.rotation.opposite.y // switches to opposite value
       if (this.key.right.isDown) this.fadeToAction({ name: 'running', inReverse: true, speed: this.speed / 5, duration: 0.05 }) // fix for moonwalking bug after switching
-      gsap.to(this.Object3D.rotation, 0.3, { y: switchedRotation, ease: 'Power1.easeOut' })
+      TweenLite.to(this.Object3D.rotation, 0.3, { y: switchedRotation, ease: 'Power1.easeOut' })
     }
   }
   switchLeft () {
@@ -298,7 +313,7 @@ export default class Player1 {
         this.isSwitchOn = false
         const switchedRotation = this.default.rotation.y
         if (this.key.left.isDown) this.fadeToAction({ name: 'running', inReverse: true, speed: this.speed / 5, duration: 0.05 }) // fix for moonwalking bug after switching
-        gsap.to(this.Object3D.rotation, 0.3, { y: switchedRotation, ease: 'Power1.easeOut' })
+        TweenLite.to(this.Object3D.rotation, 0.3, { y: switchedRotation, ease: 'Power1.easeOut' })
       }
     }
   }
@@ -314,6 +329,7 @@ export default class Player1 {
         if (!this.stamps.hasOwnProperty(key.code)) {
           this.stamps[key.code] = {
             startTime: this.currentTime,
+            prevPassedTime: 0,
             startPosition: {
               x: this.Object3D.position.x,
               y: this.Object3D.position.y
@@ -331,6 +347,7 @@ export default class Player1 {
   _updateTargetedKeyStamps () {
     const timeStampInfo = {
       startTime: this.currentTime,
+      prevPassedTime: 0,
       startPosition: {
         x: this.Object3D.position.x,
         y: this.Object3D.position.y
@@ -344,16 +361,23 @@ export default class Player1 {
     if (this.stamps.hasOwnProperty(this.key.right.code)) {
       this.stamps[this.key.right.code] = timeStampInfo
     }
-    // console.error(this.stamps)
   }
 
-  update (time) {
+  update (time, collidedPlayer) {
     this.currentTime = time
     this._addKeyStamps()
-    this._handleMovement()
+
+    if (collidedPlayer) {
+      this.handleCollisionMovement(collidedPlayer)
+      this._isAlreadyCollided = true
+    } else {
+      this._handleMovement()
+      // console.error('_isAlreadyCollided')
+      this._isAlreadyCollided = false
+    }
   }
   _handleMovement () {
-    if (this.key.left.isDown && this.key.right.isDown || this.collision) {
+    if (this.key.left.isDown && this.key.right.isDown) {
       this._updateTargetedKeyStamps()
 
       return
@@ -372,13 +396,14 @@ export default class Player1 {
       if (this.key.left.isDown) return
 
       const currentPressedKey = this.key.right.code
-      const { startPosition, distanceToTravel } = this.getMovebasedOnStampInfo(currentPressedKey)
+      // const { startPosition, distanceToTravel } = this.getMovebasedOnStampInfo(currentPressedKey)
+      const { distanceToTravel } = this.testStampMove(currentPressedKey)
 
-      this.Object3D.position.x = startPosition.x + distanceToTravel
+      this.Object3D.position.x += distanceToTravel
     }
   }
 
-  getMovebasedOnStampInfo (targetKeyCode) {
+  getMovebasedOnStampInfo (targetKeyCode, speed = this.speed) {
     if (!this.stamps.hasOwnProperty(targetKeyCode)) {
       console.warn('Hey, I need a key code for a key that is pressed!')
       return
@@ -386,9 +411,30 @@ export default class Player1 {
     const { startTime, startPosition } = this.stamps[targetKeyCode]
 
     const passedTime = this.currentTime - startTime
-    const distanceToTravel = (this.speed * Config.moveMultiplier) * passedTime
+    const distanceToTravel = (speed * Config.moveMultiplier) * passedTime
     // console.error('passedTime', passedTime, 'distanceToTravel', distanceToTravel)
     return { startPosition, distanceToTravel }
+  }
+
+  testStampMove (targetKeyCode, speed = this.speed) {
+    if (!this.stamps.hasOwnProperty(targetKeyCode)) {
+      console.warn('Hey, I need a key code for a key that is pressed!')
+      return
+    }
+    const { startTime } = this.stamps[targetKeyCode]
+
+    const passedTime = this.currentTime - startTime
+    const { prevPassedTime } = this.stamps[targetKeyCode]
+    // const passedTimeBetweenTicks = prevPassedTime > 0 ? passedTime - prevPassedTime : 0
+    const passedTimeBetweenTicks = passedTime - prevPassedTime
+
+    const distanceToTravel = (speed * Config.moveMultiplier) * passedTimeBetweenTicks
+    // console.error('passedTime', passedTime, 'distanceToTravel', distanceToTravel, 'passedTimeBetweenTicks', passedTimeBetweenTicks)
+    this.stamps[targetKeyCode].prevPassedTime = passedTime
+    console.warn(distanceToTravel, 'distanceToTravel')
+
+    // console.warn('distanceToTravel', distanceToTravel, 'passedTime', passedTime, 'prevPassedTime', prevPassedTime, 'passedTimeBetweenTicks', passedTimeBetweenTicks)
+    return { distanceToTravel }
   }
 
   get activeAction () {

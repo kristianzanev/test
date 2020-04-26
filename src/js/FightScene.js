@@ -153,17 +153,10 @@ export default class FightScene {
     // window.fpsCap = 60
     const render = (time) => {
       this.objScene.forEach(({ mixer, clock }) => mixer.update(clock.getDelta()))
-      const collidedPlayers = this.collisionEngine.getCollidedPlayers() // there are always be 2 collided elements
-      this.player1.update(time)
-      this.player2.update(time)
+      const { player1: collidedPlayer1, player2: collidedPlayer2 } = this.collisionEngine.getCollidedPlayers() // there are always be 2 collided elements
 
-      if (collidedPlayers) {
-        collidedPlayers.player1.handleCollisionMovement(collidedPlayers.player2)
-        collidedPlayers.player2.handleCollisionMovement(collidedPlayers.player1)
-      } else {
-        this.player1.collision = false
-        this.player2.collision = false
-      }
+      this.player1.update(time, collidedPlayer2)
+      this.player2.update(time, collidedPlayer1)
 
       this.player1.handleRotationSwitch(this.player2.position.x)
       this.player2.handleRotationSwitch(this.player1.position.x)

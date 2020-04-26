@@ -34,7 +34,7 @@ export default class CollissionEngine {
 
   getCollidedPlayers () {
     this._updateAllBBoxes()
-    let collidedElements
+    let collidedElements = {}
     for (let i = 0; i < this._elements.length; i++) {
       const element1 = this._elements[i]
 
