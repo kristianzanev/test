@@ -5,7 +5,8 @@ const Config = {
   speed: 7,
   jumpLength: 200,
   spawnPosition: -200,
-  moveMultiplier: 50
+  moveMultiplier: 50,
+  speedInCollision: 4
 }
 
 const States = {
@@ -61,7 +62,6 @@ export default class Player1 {
     }
     this.timeline = new TimelineLite()
     this.moveTimeline = new TimelineLite()
-    this._isAlreadyCollided = false
     this._playingAnim = {}
 
     this.init()
@@ -75,7 +75,7 @@ export default class Player1 {
     this.setAnimations()
     this.handleKeyboardEvents()
   }
-  setActionNames () { // will cause bugs if name of obejct3d is changed
+  setActionNames () { // will cause bugs if name of object3d is changed
     this.actionNames = this.Object3D.animations.reduce((acc, anim) => {
       if (anim.name.includes('Armature')) {
         const cleanName = anim.name.split('|')[1]
@@ -257,29 +257,23 @@ export default class Player1 {
     return !isSameAnim && canInterupt
   }
 
-  handleCollisionMovement (player2) {
-    const isMovingLeft = this.key.left.isDown // this player move directions
-    const isMovingRight = this.key.right.isDown //
-    const isStill = !this.key.left.isDown && !this.key.right.isDown//
-    const isInLeftSide = this.position.x <= player2.position.x // is this player from the left side of player2
-    const isInRightSide = this.position.x > player2.position.x // is this player from the right side of player2
+  _handleCollisionMovement (player2) {
+    const isMovingLeft = this.key.left.isDown
+    const isMovingRight = this.key.right.isDown
+    const isStill = !this.key.left.isDown && !this.key.right.isDown
+    const isInLeftSide = this.position.x <= player2.position.x
+    const isInRightSide = this.position.x > player2.position.x
+
+    const moveDistance = this._moveDistancePerFrame() / Config.speedInCollision
 
     if (isInLeftSide) {
-      if (isMovingRight) {
-        player2.position.x += this.moveDistancePerFrame / 4
-      } if (isMovingLeft) {
-        this._handleMovement()
-      } else if (isStill) {
-        player2.position.x += player2.moveDistancePerFrame / 4
-      }
+      if (isMovingRight) player2.position.x += moveDistance
+      else if (isMovingLeft) this._handleMovement()
+      else if (isStill) player2.position.x += moveDistance
     } else if (isInRightSide) {
-      if (isMovingLeft) {
-        player2.position.x -= this.moveDistancePerFrame / 4
-      } else if (isMovingRight) {
-        this._handleMovement()
-      } else if (isStill) {
-        player2.position.x -= player2.moveDistancePerFrame / 4
-      }
+      if (isMovingLeft) player2.position.x -= moveDistance
+      else if (isMovingRight) this._handleMovement()
+      else if (isStill) player2.position.x -= moveDistance
     }
   }
   handleRotationSwitch (opponentPosX) {
@@ -311,13 +305,11 @@ export default class Player1 {
     this._currentTime = time
 
     if (collidedPlayer) {
-      this.handleCollisionMovement(collidedPlayer)
-      this._isAlreadyCollided = true
+      this._handleCollisionMovement(collidedPlayer)
     } else {
       this._handleMovement()
-      this._isAlreadyCollided = false
     }
-    this._prevTime = this._currentTime
+    this._prevTime = time
   }
   _handleMovement () {
     if (this.key.left.isDown && this.key.right.isDown) {
@@ -327,17 +319,17 @@ export default class Player1 {
     if (this.key.left.isDown) {
       if (this.key.right.isDown) return
 
-      this.Object3D.position.x -= this.moveDistancePerFrame
+      this.Object3D.position.x -= this._moveDistancePerFrame()
     }
 
     if (this.key.right.isDown) {
       if (this.key.left.isDown) return
 
-      this.Object3D.position.x += this.moveDistancePerFrame
+      this.Object3D.position.x += this._moveDistancePerFrame()
     }
   }
 
-  get moveDistancePerFrame () {
+  _moveDistancePerFrame () {
     const passedTimeBetweenFrames = this._prevTime ? this._currentTime - this._prevTime : 0
     return passedTimeBetweenFrames * (this.speed * Config.moveMultiplier)
   }
