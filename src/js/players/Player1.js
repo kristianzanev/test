@@ -1,5 +1,5 @@
 /* eslint-disable no-mixed-operators */
-import { TimelineLite, TweenLite } from 'gsap/all'
+import { TimelineLite, TweenLite, gsap } from 'gsap/all'
 
 const Config = {
   speed: 7,
@@ -34,21 +34,19 @@ export default class Player1 {
       },
       jump: {
         isDown: false,
-        isAlreadyPressed: false,
         code: 'KeyW'
       },
       right: {
         isDown: false,
-        isAlreadyPressed: false,
         code: 'KeyD'
       },
       mmaKick: {
         isDown: false,
-        isAlreadyPressed: false,
         code: 'KeyG'
       }
     }
     console.error(States)
+    console.error(gsap)
     this.isSwitchedBefore = false
     this.isSwitchOn = false // for switching animations for the other player orientation
     this.default = {
@@ -67,7 +65,7 @@ export default class Player1 {
     this.init()
   }
   init () {
-    // gsap.ticker.lagSmoothing(0) // for not pausing rendering when swiching tabs, its bad because if theres fps drop there will be no smoothing of animations
+    gsap.ticker.lagSmoothing(0) // for not pausing rendering when swiching tabs and fps drop
     this.setActionNames()
     this.setPosition() // for setting position and rotation
     this.mixActions()
@@ -112,46 +110,41 @@ export default class Player1 {
       this._activeAction.play()
     } else this._activeAction = this.actions['idle'].play()
 
-    this._playingAnim = { name: this._activeAction.getClip().name, inReverse }
+    this._playingAnim = { name: this._activeAction.getClip().name, inReverse, activeAction: this._activeAction }
   }
   setAnimations () {
-    // eslint-disable-next-line no-unused-vars
-    let isAlreadyIdle = false
-    // eslint-disable-next-line no-unused-vars
-    this.isAlreadyJumping = false
-
-    this.moveLeft = () => {
+    this.moveLeft = ({ forcePlay } = {}) => {
+      if (!this._shouldPlayAnim(this.actionNames.running, true) && !forcePlay) return
       if (!this.isSwitchOn) this.fadeToAction({ name: 'running', inReverse: true, speed: this.speed / 5 })
       else this.fadeToAction({ name: 'running', speed: this.speed / 5 })
-      isAlreadyIdle = false
     }
-    this.moveRight = () => {
+    this.moveRight = ({ forcePlay } = {}) => {
+      if (!this._shouldPlayAnim(this.actionNames.running) && !forcePlay) return
       if (!this.isSwitchOn) this.fadeToAction({ name: 'running', speed: this.speed / 5 })
       else this.fadeToAction({ name: 'running', inReverse: true, speed: this.speed / 5 })
-      isAlreadyIdle = false
     }
-    this.mmaKick = () => {
-      const isKickStillPlaying = this._activeAction.getClip().name === 'mmaKick' && this._activeAction.isRunning()
-      if (!isKickStillPlaying) {
-        this.fadeToAction({ name: 'mmaKick', speed: 2, isLoopOnce: true })
-        isAlreadyIdle = false
-        this.mixer.addEventListener('finished', event => {
-          const finishedClip = event.action.getClip()
-          if (finishedClip === this._activeAction.getClip()) {
-            this.idle()
-          }
-          this.mixer.removeEventListener('finished')
-        })
-      }
+    this.mmaKick = ({ forcePlay } = {}) => {
+      // if(this.blockMovement)this.Object3D.x +=
+      if (!this._shouldPlayAnim(this.actionNames.mmaKick) && !forcePlay) return
+      this.blockMovement = true
+      this.fadeToAction({ name: 'mmaKick', speed: 2, isLoopOnce: true })
+      this.mixer.addEventListener('finished', event => {
+        const finishedClip = event.action.getClip()
+        if (finishedClip === this._activeAction.getClip()) {
+          this.blockMovement = false
+          this._properAnimFallback()
+        }
+        this.mixer.removeEventListener('finished')
+      })
     }
-    this.jump = () => {
-      if (this.isAlreadyJumping === false) {
+    this.jump = ({ forcePlay } = {}) => {
+      if (!this._shouldPlayAnim(this.actionNames.jumping) && !forcePlay) return
+      if (!this.isAlreadyJumping) {
+        this.isAlreadyJumping = true
         const timescale = this.speed / 3
         const duration = ((this.actions.jumping.getClip().duration / timescale))
-        const halfDuration = (duration / 2.2).toFixed(3) * 1 /** divided by 2.2 because of up and down in timeline
+        const halfDuration = (duration / 2).toFixed(4) * 1 /** divided by 2.2 because of up and down in timeline
         ( there is bug if its only by 2) also fadeToAction and timeline anim are syncing and because there are 2 actions */
-        isAlreadyIdle = false
-        this.isAlreadyJumping = true
         this.fadeToAction({ name: 'jumping', speed: timescale, isLoopOnce: true })
         this.timeline
           .to(this.Object3D.position, halfDuration, { y: this.jumpLength, ease: 'Power1.easeOut' })
@@ -160,87 +153,60 @@ export default class Player1 {
             ease: 'Power1.easeIn',
             onComplete: () => {
               this.isAlreadyJumping = false
-              if (this.key.left.isDown && this.key.right.isDown) {
-                // console.error('playing moveRight')
-                this.idle() // if player holds a,d before and after jump
-              } else if (this.key.right.isDown) {
-                // console.error('playing moveRight')
-                this.moveRight()
-              } else if (this.key.left.isDown) {
-                // console.error('playing moveLeft')
-                this.moveLeft()
-              } else {
-                // console.error('playing idle last else')
-                this.idle()
-              }
+              this._properAnimFallback()
             }
           })
       }
     }
-    this.idle = () => {
-      if (!isAlreadyIdle) {
-        this.fadeToAction({ name: 'idle' })
-        isAlreadyIdle = true
-      }
+    this.idle = ({ forcePlay } = {}) => {
+      if (forcePlay) this.fadeToAction({ name: 'idle' })
+      else if (this._shouldPlayAnim(this.actionNames.idle)) this.fadeToAction({ name: 'idle' })
     }
   }
   handleKeyboardEvents () {
     const logKeyDown = (event) => {
       if (event.code === this.key.right.code) {
         this.key.right.isDown = true
-        // if (!this.key.right.isAlreadyPressed) { // checking if key is previously pressed
-        // if (this.isAlreadyJumping) return
-        // if (this.key.left.isDown) this.idle() // plays idle in case if player holds a, d keys
-        // else this.moveRight()
-        // }
-        this.key.right.isAlreadyPressed = true
-        const shouldMoveRight = this._shouldPlayAnim(this.actionNames.running)
         if (this.key.left.isDown) {
           this.idle()
           return
         }
-        if (shouldMoveRight) this.moveRight()
+        this.moveRight()
       }
       if (event.code === this.key.left.code) {
         this.key.left.isDown = true
-        if (!this.key.left.isAlreadyPressed) {
-          if (this.isAlreadyJumping) return
-          if (this.key.right.isDown) this.idle() // plays idle in case if player holds a, d keys
-          else this.moveLeft()
+        if (this.key.right.isDown) {
+          this.idle()
+          return
         }
-        this.key.left.isAlreadyPressed = true
+        this.moveLeft()
       }
       if (event.code === this.key.jump.code) {
         this.key.jump.isDown = true
-        if (this.key.jump.isAlreadyPressed === false) this.jump()
-        this.key.jump.isAlreadyPressed = true
+        this.jump()
       }
       if (event.code === this.key.mmaKick.code) {
         this.key.mmaKick.isDown = true
-        if (this.key.mmaKick.isAlreadyPressed === false) this.mmaKick()
-        this.key.mmaKick.isAlreadyPressed = true
+        this.mmaKick()
       }
     }
+
     const logKeyUp = (event) => {
       if (event.code === this.key.right.code) {
         this.key.right.isDown = false
-        if (this.key.left.isDown && !this.isAlreadyJumping) this.moveLeft() // in case if player holds a,d or w,d then releases one of the keys, otherwise idle animation will play
-        else if (!this.key.left.isDown && !this.isAlreadyJumping) this.idle()
-        this.key.right.isAlreadyPressed = false
+        if (this.key.left.isDown && this._shouldPlayAnim(this.actionNames.running, true)) this.moveLeft() // in case if player holds a,d or w,d then releases one of the keys, otherwise idle animation will play
+        else if (!this.key.left.isDown && this._shouldPlayAnim(this.actionNames.idle)) this.idle()
       }
       if (event.code === this.key.left.code) {
         this.key.left.isDown = false
-        if (this.key.right.isDown && !this.isAlreadyJumping) this.moveRight() // in case if player holds a,d or a,w then releases one of the keys, otherwise idle animation will play
-        else if (!this.key.right.isDown && !this.isAlreadyJumping) this.idle()
-        this.key.left.isAlreadyPressed = false
+        if (this.key.right.isDown && this._shouldPlayAnim(this.actionNames.running)) this.moveRight() // in case if player holds a,d or a,w then releases one of the keys, otherwise idle animation will play
+        else if (!this.key.right.isDown && this._shouldPlayAnim(this.actionNames.idle)) this.idle()
       }
       if (event.code === this.key.jump.code) {
         this.key.jump.isDown = false
-        this.key.jump.isAlreadyPressed = false
       }
       if (event.code === this.key.mmaKick.code) {
         this.key.mmaKick.isDown = false
-        this.key.mmaKick.isAlreadyPressed = false
       }
     }
     window.addEventListener('keyup', logKeyUp)
@@ -248,13 +214,16 @@ export default class Player1 {
   }
 
   _shouldPlayAnim (actionName, inReverse = false) {
-    // interuptable animations (idle, running)
     const isSameAnim = this.isSwitchOn && this.actionNames.running === actionName
       ? this._playingAnim.inReverse !== inReverse && actionName === this._playingAnim.name
       : this._playingAnim.inReverse === inReverse && actionName === this._playingAnim.name
 
-    const canInterupt = this._playingAnim.name === this.actionNames.idle || this._playingAnim.name === this.actionNames.running
-    return !isSameAnim && canInterupt
+    // interuptable animations (idle, running)
+    const isInteruptableAnim = this._playingAnim.name === this.actionNames.idle ||
+      this._playingAnim.name === this.actionNames.running
+
+    const isNonInteruptAnimStoped = !isInteruptableAnim && !this._playingAnim.activeAction.isRunning()
+    return !isSameAnim && isInteruptableAnim || isNonInteruptAnimStoped
   }
 
   _handleCollisionMovement (player2) {
@@ -312,7 +281,7 @@ export default class Player1 {
     this._prevTime = time
   }
   _handleMovement () {
-    if (this.key.left.isDown && this.key.right.isDown) {
+    if (this.key.left.isDown && this.key.right.isDown || this.blockMovement) {
       return
     }
 
@@ -328,14 +297,25 @@ export default class Player1 {
       this.Object3D.position.x += this._moveDistancePerFrame()
     }
   }
+  _properAnimFallback () {
+    if (this.key.left.isDown && this.key.right.isDown) {
+      this.idle({ forcePlay: true }) // if player holds a,d before and after jump
+    } else if (this.key.right.isDown) {
+      this.moveRight({ forcePlay: true })
+    } else if (this.key.left.isDown) {
+      this.moveLeft({ forcePlay: true })
+    } else {
+      this.idle({ forcePlay: true })
+    }
+  }
 
   _moveDistancePerFrame () {
     const passedTimeBetweenFrames = this._prevTime ? this._currentTime - this._prevTime : 0
     return passedTimeBetweenFrames * (this.speed * Config.moveMultiplier)
   }
 
-  get activeAction () {
-    return this._activeAction
+  get activeActionName () {
+    return this._activeAction.getClip().name
   }
 
   get currentSpeed () {
