@@ -2,6 +2,7 @@
 import Player1 from './players/Player1'
 import Player2 from './players/Player2'
 import CollisionEngine from './utils/CollisionEngine'
+import EventDispatcher from './utils/EventDispatcher'
 import { gsap } from 'gsap'
 
 const THREE = window.THREE = require('three')
@@ -10,8 +11,9 @@ const Zlib = require('three/examples/js/libs/inflate.min')
 window.Zlib = Zlib.Zlib
 //! https://github.com/mrdoob/three.js/blob/master/examples/webgl_animation_skinning_blending.html
 
-export default class FightScene {
+export default class FightScene extends EventDispatcher {
   constructor () {
+    super()
     this.objScene = []
     this.modelPath = { // assets are in public folder, but are copied from webpack thats why there isn't the word 'public' in the path
       // player: '/animations/dummy6.fbx',
@@ -42,6 +44,7 @@ export default class FightScene {
     this.camera.position.z = 550
     this.camera.position.y = 150
     this.renderer = new THREE.WebGLRenderer({ antialias: true })
+    this.renderer.setSize(window.innerWidth, window.innerHeight)
     this.renderer.setClearColor('#e5e5e5')
     this.renderer.setSize(window.innerWidth, window.innerHeight)
 
@@ -54,25 +57,6 @@ export default class FightScene {
     const light = new THREE.PointLight(0xFFFFFF, 1, 1500)
     light.position.set(0, 100, 150)
     this.scene.add(light)
-
-    // this.detectCollisionCubes = (mesh1, mesh2) => {
-    //   mesh1.geometry.computeBoundingBox()
-    //   mesh2.geometry.computeBoundingBox()
-    //   mesh1.updateMatrixWorld()
-    //   mesh2.updateMatrixWorld()
-
-    //   const box1 = mesh1.geometry.boundingBox.clone()
-    //   box1.applyMatrix4(mesh1.matrixWorld)
-
-    //   const box2 = mesh2.geometry.boundingBox.clone()
-    //   box2.applyMatrix4(mesh2.matrixWorld)
-
-    //   return box1.intersectsBox(box2)
-    // }
-
-    // this.detectCollisionCubes2 = (bbox1, bbox2) => {
-    //   return bbox1.intersectsBox(bbox2)
-    // }
 
     this.init()
   }
@@ -147,10 +131,6 @@ export default class FightScene {
       player.boxes3.forEach(box3 => this.scene.add(new THREE.Box3Helper(box3, 0x00ff00)))
     })
 
-    // this.collisionEngine.elements.forEach(el => {
-    //   this.scene.add(new THREE.Box3Helper(el.box3, 0x00ff00)) // for green box helpers
-    // })
-    // window.fpsCap = 60
     const render = (time) => {
       this.objScene.forEach(({ mixer, clock }) => mixer.update(clock.getDelta()))
       const { player1: collidedPlayer1, player2: collidedPlayer2, collidedHitBoxes } = this.collisionEngine.getCollidedPlayers() // there are always be 2 collided elements
@@ -165,7 +145,6 @@ export default class FightScene {
       this.renderer.render(this.scene, this.camera)
     }
     // gsap.ticker.fps(5)
-    // gsap.ticker.lagSmoothing(0)
     window.ticker = gsap.ticker // for testing purposes should be removed later
     gsap.ticker.add(render)
   }
@@ -178,6 +157,8 @@ export default class FightScene {
       const isSameAttack = player1.lastHit && player1.lastHit.actionName === player1.activeActionName
       if (!isSameAttack) {
         player2.removeHealth(20)
+        this.dispatch('hit', { name: player2.name, health: player2.health })
+
         player1.lastHit = { actionName: player1.activeActionName }
       }
     }
@@ -186,6 +167,7 @@ export default class FightScene {
       const isSameAttack = player2.lastHit && player2.lastHit.actionName === player2.activeActionName
       if (!isSameAttack) {
         player1.removeHealth(20)
+        this.dispatch('hit', { name: player1.name, health: player1.health })
         player2.lastHit = { actionName: player2.activeActionName }
       }
     }
@@ -196,11 +178,4 @@ export default class FightScene {
     } else if (isPlayer1Attacks) player1Attacks()
     else if (isPlayer2Attacks) player2Attacks()
   }
-  // if (player1.activeActionName === 'mmaKick') {
-  //   const isSameAttack = player1.lastHit && player1.lastHit.actionName === player1.activeActionName
-  //   if (player1.lastHit) console.error(player1.lastHit.actionName, player1.activeActionName)
-  //   if (!isSameAttack) {
-  //     player2.removeHealth(10)
-  //     player1.lastHit = { actionName: player1.activeActionName }
-  //   }
 }

@@ -9,6 +9,15 @@
 </template>
 
 <style lang="scss">
+* {
+  margin: 0;
+  padding: 0;
+}
+canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -18,7 +27,7 @@
 }
 
 #nav {
-  padding: 30px;
+  padding: 0px;
 
   a {
     font-weight: bold;
