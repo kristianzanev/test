@@ -153,10 +153,12 @@ export default class FightScene {
     // window.fpsCap = 60
     const render = (time) => {
       this.objScene.forEach(({ mixer, clock }) => mixer.update(clock.getDelta()))
-      const { player1: collidedPlayer1, player2: collidedPlayer2 } = this.collisionEngine.getCollidedPlayers() // there are always be 2 collided elements
+      const { player1: collidedPlayer1, player2: collidedPlayer2, collidedHitBoxes } = this.collisionEngine.getCollidedPlayers() // there are always be 2 collided elements
 
       this.player1.update(time, collidedPlayer2)
       this.player2.update(time, collidedPlayer1)
+
+      if (collidedHitBoxes) this._handleHealth({ player1: collidedPlayer1, player2: collidedPlayer2, collidedHitBoxes })
 
       this.player1.handleRotationSwitch(this.player2.position.x)
       this.player2.handleRotationSwitch(this.player1.position.x)
@@ -167,4 +169,38 @@ export default class FightScene {
     window.ticker = gsap.ticker // for testing purposes should be removed later
     gsap.ticker.add(render)
   }
+  _handleHealth ({ player1, player2, collidedHitBoxes } = {}) {
+    if (!collidedHitBoxes) return
+    const isPlayer1Attacks = player1.activeActionName === 'mmaKick'
+    const isPlayer2Attacks = player2.activeActionName === 'mmaKick'
+
+    const player1Attacks = () => {
+      const isSameAttack = player1.lastHit && player1.lastHit.actionName === player1.activeActionName
+      if (!isSameAttack) {
+        player2.removeHealth(20)
+        player1.lastHit = { actionName: player1.activeActionName }
+      }
+    }
+
+    const player2Attacks = () => {
+      const isSameAttack = player2.lastHit && player2.lastHit.actionName === player2.activeActionName
+      if (!isSameAttack) {
+        player1.removeHealth(20)
+        player2.lastHit = { actionName: player2.activeActionName }
+      }
+    }
+
+    if (isPlayer1Attacks && isPlayer2Attacks) {
+      if (player1.playingAnim.startTime < player2.playingAnim.startTime) player1Attacks()
+      else player2Attacks()
+    } else if (isPlayer1Attacks) player1Attacks()
+    else if (isPlayer2Attacks) player2Attacks()
+  }
+  // if (player1.activeActionName === 'mmaKick') {
+  //   const isSameAttack = player1.lastHit && player1.lastHit.actionName === player1.activeActionName
+  //   if (player1.lastHit) console.error(player1.lastHit.actionName, player1.activeActionName)
+  //   if (!isSameAttack) {
+  //     player2.removeHealth(10)
+  //     player1.lastHit = { actionName: player1.activeActionName }
+  //   }
 }

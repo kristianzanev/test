@@ -9,11 +9,11 @@ const Config = {
   speedInCollision: 4
 }
 
-const States = {
-  attack: 'attack',
-  idle: 'idle',
-  defense: 'defense'
-}
+// const States = {
+//   attack: 'attack',
+//   idle: 'idle',
+//   defense: 'defense'
+// }
 
 export default class Player1 {
   constructor (Object3D, mixer, THREELoopOnce, speed = Config.speed) {
@@ -29,7 +29,6 @@ export default class Player1 {
     this.key = {
       left: {
         isDown: false,
-        isAlreadyPressed: false, // this boolean is for checking if player is still holding the key
         code: 'KeyA'
       },
       jump: {
@@ -45,8 +44,6 @@ export default class Player1 {
         code: 'KeyG'
       }
     }
-    console.error(States)
-    console.error(gsap)
     this.isSwitchedBefore = false
     this.isSwitchOn = false // for switching animations for the other player orientation
     this.default = {
@@ -61,6 +58,7 @@ export default class Player1 {
     this.timeline = new TimelineLite()
     this.moveTimeline = new TimelineLite()
     this._playingAnim = {}
+    this._health = 100
 
     this.init()
   }
@@ -110,7 +108,7 @@ export default class Player1 {
       this._activeAction.play()
     } else this._activeAction = this.actions['idle'].play()
 
-    this._playingAnim = { name: this._activeAction.getClip().name, inReverse, activeAction: this._activeAction }
+    this._playingAnim = { name: this._activeAction.getClip().name, inReverse, activeAction: this._activeAction, startTime: this._currentTime }
   }
   setAnimations () {
     this.moveLeft = ({ forcePlay } = {}) => {
@@ -132,6 +130,7 @@ export default class Player1 {
         const finishedClip = event.action.getClip()
         if (finishedClip === this._activeAction.getClip()) {
           this.blockMovement = false
+          this._lastHit = null
           this._properAnimFallback()
         }
         this.mixer.removeEventListener('finished')
@@ -194,13 +193,13 @@ export default class Player1 {
     const logKeyUp = (event) => {
       if (event.code === this.key.right.code) {
         this.key.right.isDown = false
-        if (this.key.left.isDown && this._shouldPlayAnim(this.actionNames.running, true)) this.moveLeft() // in case if player holds a,d or w,d then releases one of the keys, otherwise idle animation will play
-        else if (!this.key.left.isDown && this._shouldPlayAnim(this.actionNames.idle)) this.idle()
+        if (this.key.left.isDown) this.moveLeft() // in case if player holds a,d or w,d then releases one of the keys, otherwise idle animation will play
+        else if (!this.key.left.isDown) this.idle()
       }
       if (event.code === this.key.left.code) {
         this.key.left.isDown = false
-        if (this.key.right.isDown && this._shouldPlayAnim(this.actionNames.running)) this.moveRight() // in case if player holds a,d or a,w then releases one of the keys, otherwise idle animation will play
-        else if (!this.key.right.isDown && this._shouldPlayAnim(this.actionNames.idle)) this.idle()
+        if (this.key.right.isDown) this.moveRight() // in case if player holds a,d or a,w then releases one of the keys, otherwise idle animation will play
+        else if (!this.key.right.isDown) this.idle()
       }
       if (event.code === this.key.jump.code) {
         this.key.jump.isDown = false
@@ -313,9 +312,31 @@ export default class Player1 {
     const passedTimeBetweenFrames = this._prevTime ? this._currentTime - this._prevTime : 0
     return passedTimeBetweenFrames * (this.speed * Config.moveMultiplier)
   }
+  removeHealth (amount) {
+    this._health = this._health - amount <= 0 ? this._health = 0 : this._health - amount
+    console.warn(this._health, this.Object3D.name)
+    if (this._health === 0) alert(this.Object3D.name + ' is dead')
+  }
+  set lastHit (value) {
+    this._lastHit = value
+  }
+  get lastHit () {
+    return this._lastHit
+  }
+
+  get health () {
+    return this._health
+  }
+  get name () {
+    return this.Object3D.name
+  }
 
   get activeActionName () {
     return this._activeAction.getClip().name
+  }
+
+  get playingAnim () {
+    return this._playingAnim
   }
 
   get currentSpeed () {
