@@ -1,29 +1,32 @@
 
 <template>
   <div class="home">
-    <!-- <h1>3d scene</h1> -->
     <div id='stage'>
-      <div class='left-bar bar-wrap'>
-        <span>{{healthBar.player1.health}}</span>
-        <span>{{healthBar.player2.health}}</span>
-        <div class='left-health-bar health-bar'/>
-         </div>
+      <HealthBar v-bind:healthStatus="this.healthBar.player1"/>
+      <HealthBar position='right' v-bind:healthStatus="this.healthBar.player2"/>
     </div>
   </div>
 </template>
 
 <script>
 import FightScene from '../js/FightScene.js'
+import HealthBar from '../components/HealthBar'
 
 export default {
+  name: 'home',
+  components: {
+    HealthBar
+  },
   data () {
     return {
       healthBar: {
         player1: {
-          health: ''
+          health: 100,
+          name: 'player1'
         },
         player2: {
-          health: ''
+          health: 100,
+          name: 'player2'
         }
       }
     }
@@ -32,15 +35,13 @@ export default {
     const stage = document.querySelector('#stage')
     const scene = new FightScene()
     scene.createScene(stage)
-    scene.addListener('hit', (hitPlayer) => {
-      // this.healthBar[hitPlayer.name] = hitPlayer.health
-      // this.$set(this.healthBar, hitPlayer.name, hitPlayer.health)
-      console.error(this.healthBar.player1, this.healthBar.player2, this)
-    })
+    scene.addListener('hit', (hitPlayer) => this.$emit('healthChange', hitPlayer))
+
+    this.$on('healthChange', e => this.updateHealth(e))
   },
   methods: {
-    removeHealth (hitPlayer) {
-      this.healthBar[hitPlayer.name] = hitPlayer.health
+    updateHealth (hitPlayer) {
+      this.healthBar[hitPlayer.name].health = hitPlayer.health
     }
   }
 }
