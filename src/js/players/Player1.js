@@ -314,9 +314,8 @@ export default class Player1 {
   }
   removeHealth (amount) {
     this._health = this._health - amount <= 0 ? this._health = 0 : this._health - amount
-    console.warn(this._health, this.Object3D.name)
     if (this._health === 0) {
-      console.error(this.Object3D.name + ' is dead')
+      // console.error(this.Object3D.name + ' is dead')
       this._health = 100
     }
     return this._health

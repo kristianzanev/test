@@ -72,17 +72,17 @@ export default class FightScene extends EventDispatcher {
   handleLoadingProgress () {
     return new Promise((resolve, reject) => {
       this.manager.onStart = function (url, itemsLoaded, itemsTotal) {
-        console.log('Started loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.')
+        // console.log('Started loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.')
       }
       this.manager.onLoad = function () {
-        console.log('Loading complete!')
+        // console.log('Loading complete!')
         resolve('Loading complete!')
       }
       this.manager.onProgress = function (url, itemsLoaded, itemsTotal) {
-        console.log('Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.')
+        // console.log('Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.')
       }
       this.manager.onError = function (url) {
-        console.log('There was an error loading ' + url)
+        // console.log('There was an error loading ' + url)
         // eslint-disable-next-line prefer-promise-reject-errors
         reject(url)
       }
@@ -101,11 +101,12 @@ export default class FightScene extends EventDispatcher {
 
       this.objScene.push({ Object3D, mixer, clock: new THREE.Clock() })
     }, undefined, error => {
-      console.error(error)
+      throw (error)
+      // console.error(error)
     })
     loader.load(this.modelPath.player, Object3D => {
       Object3D.name = 'player2'
-      console.error(Object3D)
+      // console.error(Object3D)
       const mixer = new THREE.AnimationMixer(Object3D)
       this.player2 = new Player2(Object3D, mixer, THREE.LoopOnce)
       this.player2.Object3d.children.forEach(mesh => {
@@ -122,7 +123,7 @@ export default class FightScene extends EventDispatcher {
       this.scene.add(Object3D)
       this.objScene.push({ Object3D, mixer, clock: new THREE.Clock() })
     }, undefined, error => {
-      console.error(error)
+      throw (error)
     })
   }
 
