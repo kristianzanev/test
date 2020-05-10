@@ -1,6 +1,6 @@
 
 <template>
-  <div class="home">
+  <div class="game">
     <div id='stage'>
       <HealthBar v-bind:healthStatus="this.healthBar.player1"/>
       <HealthBar position='right' v-bind:healthStatus="this.healthBar.player2"/>
@@ -13,7 +13,7 @@ import FightScene from '../js/FightScene.js'
 import HealthBar from '../components/HealthBar'
 
 export default {
-  name: 'home',
+  name: 'game',
   components: {
     HealthBar
   },
