@@ -10,6 +10,7 @@ require('three/examples/js/loaders/FBXLoader')
 const Zlib = require('three/examples/js/libs/inflate.min')
 window.Zlib = Zlib.Zlib
 //! https://github.com/mrdoob/three.js/blob/master/examples/webgl_animation_skinning_blending.html
+const URL = window.location.href
 
 export default class FightScene extends EventDispatcher {
   constructor () {
@@ -18,7 +19,7 @@ export default class FightScene extends EventDispatcher {
     this.modelPath = { // assets are in public folder, but are copied from webpack thats why there isn't the word 'public' in the path
       // player: '/animations/dummy6.fbx',
       // player: '/animations/modelHitboxes.fbx'
-      player: '/animations/multiple_hiboxes_convexHull2.fbx'
+      player: URL + 'animations/multiple_hiboxes_convexHull2.fbx'
     }
     this.actions = {}
     this.mixer = null

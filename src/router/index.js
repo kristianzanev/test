@@ -19,8 +19,13 @@ const routes = [
     component: () => import(/* webpackChunkName: "about" */ '../views/About.vue')
   }
 ]
-
+/**
+ *  mode: 'history', removes /#/ from the URL
+ * The default mode for vue-router is hash mode - it uses the URL hash to simulate a full URL so
+ *  that the page won't be reloaded when the URL changes.
+ */
 const router = new VueRouter({
+  mode: 'history',
   routes
 })
 
