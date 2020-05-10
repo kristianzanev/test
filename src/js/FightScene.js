@@ -19,7 +19,7 @@ export default class FightScene extends EventDispatcher {
     this.modelPath = { // assets are in public folder, but are copied from webpack thats why there isn't the word 'public' in the path
       // player: '/animations/dummy6.fbx',
       // player: '/animations/modelHitboxes.fbx'
-      player: URL + 'animations/multiple_hiboxes_convexHull2.fbx'
+      player: URL + '/animations/multiple_hiboxes_convexHull2.fbx'
     }
     this.actions = {}
     this.mixer = null
