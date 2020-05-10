@@ -1,4 +1,4 @@
-# fighter game
+# fighter game [DEMO](https://kristianzanev.github.io/game/)
 
 ## Project setup
 ```
