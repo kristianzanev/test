@@ -1,3 +1,10 @@
 module.exports = {
-  publicPath: '/game/'
+  publicPath: '/game/',
+
+  pluginOptions: {
+    express: {
+      shouldServeApp: true,
+      serverDir: './srv'
+    }
+  }
 }
