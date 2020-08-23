@@ -1,15 +1,19 @@
-module.exports = {
-  root: true,
+module.exports = {   root: true,
   env: {
     node: true
   },
   'extends': [
     'plugin:vue/essential',
-    '@vue/standard'
+    '@vue/standard',
   ],
   rules: {
     'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
-    'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off'
+    'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
+    // 'no-unused-vars': 'warn', // options: error, warn, off
+    // 'eol-last': 'off',
+    // 'semi': [2, "always"], // enforcing the use of semicolon
+    // 'no-trailing-spaces': 'off',
+    // 'no-multiple-empty-lines': 'warn'
   },
   parserOptions: {
     parser: 'babel-eslint'
