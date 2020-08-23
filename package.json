@@ -8,9 +8,11 @@
     "test:unit": "vue-cli-service test:unit",
     "lint": "vue-cli-service lint",
     "express": "vue-cli-service express:watch",
-    "express:run": "vue-cli-service express:run"
+    "express:run": "vue-cli-service express:run",
+    "start": "concurrently \"npm run build\" \"npm run express:run\""
   },
   "dependencies": {
+    "concurrently": "^5.3.0",
     "core-js": "^3.4.4",
     "gsap": "^3.0.4",
     "three": "^0.112.1",

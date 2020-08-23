@@ -1,5 +1,5 @@
 module.exports = {
-  publicPath: '/game/',
+  // publicPath: '/game/',
 
   pluginOptions: {
     express: {
