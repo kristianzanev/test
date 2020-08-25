@@ -1,9 +1,11 @@
 /* eslint-disable no-mixed-operators */
+/* eslint no-console: ["error", { allow: ["warn", "error", "log"] }] */
 import Player1 from './players/Player1'
 import Player2 from './players/Player2'
 import CollisionEngine from './utils/CollisionEngine'
 import EventDispatcher from './utils/EventDispatcher'
 import { gsap } from 'gsap'
+import io from 'socket.io-client'
 
 const THREE = window.THREE = require('three')
 require('three/examples/js/loaders/FBXLoader')
@@ -32,6 +34,7 @@ export default class FightScene extends EventDispatcher {
       THREEMatrix4: THREE.Matrix4,
       THREEBox3: THREE.Box3
     })
+    this._setupSockets() // necessary to listen for sockets events in constructor
   }
 
   createScene (stage) { // TODO make an init function which is invoked in this class
@@ -101,6 +104,7 @@ export default class FightScene extends EventDispatcher {
       this.scene.add(Object3D)
 
       this.objScene.push({ Object3D, mixer, clock: new THREE.Clock() })
+      this._connectKeys(this.player1)
     }, undefined, error => {
       throw (error)
       // console.error(error)
@@ -150,6 +154,29 @@ export default class FightScene extends EventDispatcher {
     window.ticker = gsap.ticker // for testing purposes should be removed later
     gsap.ticker.add(render)
   }
+  _setupSockets () {
+    this.socket = io(URL)
+    this.socket.on('connected', () => {
+      console.warn(`web-socket with id: ${this.socket.id} connected`)
+      window.addEventListener('keyup', (data) => {
+        this.socket.emit('keyup', data)
+      })
+      window.addEventListener('keydown', (data) => this.socket.emit('keydown', data))
+    })
+  }
+
+  _connectKeys (player) {
+    this.socket.on('keyupServe', (e) => {
+      console.error('client is recieving: keyupServe', e)
+      player.logKeyUp(e)
+    })
+    this.socket.on('keydownServe', (e) => {
+      console.error('client is recieving: keydownServe', e)
+
+      player.logKeyDown(e)
+    })
+  }
+
   _handleHealth ({ player1, player2, collidedHitBoxes } = {}) {
     if (!collidedHitBoxes) return
     const isPlayer1Attacks = player1.activeActionName === 'mmaKick'

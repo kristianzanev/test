@@ -163,7 +163,7 @@ export default class Player1 {
     }
   }
   handleKeyboardEvents () {
-    const logKeyDown = (event) => {
+    this.logKeyDown = (event) => {
       if (event.code === this.key.right.code) {
         this.key.right.isDown = true
         if (this.key.left.isDown) {
@@ -190,7 +190,7 @@ export default class Player1 {
       }
     }
 
-    const logKeyUp = (event) => {
+    this.logKeyUp = (event) => {
       if (event.code === this.key.right.code) {
         this.key.right.isDown = false
         if (this.key.left.isDown) this.moveLeft() // in case if player holds a,d or w,d then releases one of the keys, otherwise idle animation will play
@@ -208,8 +208,8 @@ export default class Player1 {
         this.key.mmaKick.isDown = false
       }
     }
-    window.addEventListener('keyup', logKeyUp)
-    window.addEventListener('keydown', logKeyDown)
+    // window.addEventListener('keyup', logKeyUp)
+    // window.addEventListener('keydown', logKeyDown)
   }
 
   _shouldPlayAnim (actionName, inReverse = false) {
