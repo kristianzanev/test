@@ -104,7 +104,7 @@ export default class FightScene extends EventDispatcher {
       this.scene.add(Object3D)
 
       this.objScene.push({ Object3D, mixer, clock: new THREE.Clock() })
-      this._connectKeys(this.player1)
+      this._getServerResponse(this.player1)
     }, undefined, error => {
       throw (error)
       // console.error(error)
@@ -159,18 +159,28 @@ export default class FightScene extends EventDispatcher {
     this.socket.on('connected', () => {
       console.warn(`web-socket with id: ${this.socket.id} connected`)
       window.addEventListener('keyup', (data) => {
-        this.socket.emit('keyup', data)
+        if (data.code === 'KeyD') this.socket.emit('KeyDUp', this.player1.position)
+        if (data.code === 'KeyA') this.socket.emit('KeyAUp', this.player1.position)
+        if (data.code === 'KeyW') this.socket.emit('KeyWUp', this.player1.position)
+        if (data.code === 'KeyS') this.socket.emit('KeySUp', this.player1.position)
+        if (data.code === 'KeyG') this.socket.emit('KeyGUp', this.player1.position)
       })
-      window.addEventListener('keydown', (data) => this.socket.emit('keydown', data))
+      window.addEventListener('keydown', (data) => {
+        if (data.code === 'KeyD') this.socket.emit('KeyDDown', this.player1.position)
+        if (data.code === 'KeyA') this.socket.emit('KeyADown', this.player1.position)
+        if (data.code === 'KeyW') this.socket.emit('KeyWDown', this.player1.position)
+        if (data.code === 'KeyS') this.socket.emit('KeySDown', this.player1.position)
+        if (data.code === 'KeyG') this.socket.emit('KeyGDown', this.player1.position)
+      })
     })
   }
 
-  _connectKeys (player) {
-    this.socket.on('keyupServe', (e) => {
+  _getServerResponse (player) {
+    this.socket.on('keyup', (e) => {
       console.error('client is recieving: keyupServe', e)
       player.logKeyUp(e)
     })
-    this.socket.on('keydownServe', (e) => {
+    this.socket.on('keydown', (e) => {
       console.error('client is recieving: keydownServe', e)
 
       player.logKeyDown(e)

@@ -17,14 +17,47 @@ socketio.on('connection', socket => {
   })
 })
 socketio.on('connect', socket => {
-  socket.on('keyup', e => {
-    console.error('server is recieving: keyup', e)
-    socket.emit('keyupServe', e)
+  socket.on('KeyDDown', e => {
+    console.error('server is recieving: KeyDDown', e)
+    socket.emit('keydown', { code: 'KeyD' })
   })
-
-  socket.on('keydown', e => {
-    console.error('server is recieving: keydown', e)
-    socket.emit('keydownServe', { ...e })
+  socket.on('KeyADown', e => {
+    console.error('server is recieving: KeyADown', e)
+    socket.emit('keydown', { code: 'KeyA' })
+  })
+  // socket.on('KeyWDown', e => {
+  //   console.error('server is recieving: KeyWDown', e)
+  //   socket.emit('keydown', { code: 'KeyW' })
+  // })
+  socket.on('KeySDown', e => {
+    console.error('server is recieving: KeySDown', e)
+    socket.emit('keydown', { code: 'KeyS' })
+  })
+  socket.on('KeyGDown', e => {
+    console.error('server is recieving: KeyGDown', e)
+    socket.emit('keydown', { code: 'KeyG' })
+  })
+  //  asd
+  // asd
+  socket.on('KeyDUp', e => {
+    console.error('server is recieving: KeyDUp', e)
+    socket.emit('keyup', { code: 'KeyD' })
+  })
+  socket.on('KeyAUp', e => {
+    console.error('server is recieving: KeyAUp', e)
+    socket.emit('keyup', { code: 'KeyA' })
+  })
+  // socket.on('KeyWUp', e => {
+  //   console.error('server is recieving: KeyWUp', e)
+  //   socket.emit('keyup', { code: 'KeyW' })
+  // })
+  socket.on('KeySUp', e => {
+    console.error('server is recieving: KeySUp', e)
+    socket.emit('keyup', { code: 'KeyS' })
+  })
+  socket.on('KeyGUp', e => {
+    console.error('server is recieving: KeyGUp', e)
+    socket.emit('keyup', { code: 'KeyG' })
   })
 })
 
