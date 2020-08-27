@@ -159,18 +159,18 @@ export default class FightScene extends EventDispatcher {
     this.socket.on('connected', () => {
       console.warn(`web-socket with id: ${this.socket.id} connected`)
       window.addEventListener('keyup', (data) => {
-        if (data.code === 'KeyD') this.socket.emit('KeyDUp', this.player1.position)
-        if (data.code === 'KeyA') this.socket.emit('KeyAUp', this.player1.position)
-        if (data.code === 'KeyW') this.socket.emit('KeyWUp', this.player1.position)
-        if (data.code === 'KeyS') this.socket.emit('KeySUp', this.player1.position)
-        if (data.code === 'KeyG') this.socket.emit('KeyGUp', this.player1.position)
+        if (data.code === 'KeyD') this.socket.emit('KeyDUp')
+        if (data.code === 'KeyA') this.socket.emit('KeyAUp')
+        if (data.code === 'KeyW') this.socket.emit('KeyWUp')
+        if (data.code === 'KeyS') this.socket.emit('KeySUp')
+        if (data.code === 'KeyG') this.socket.emit('KeyGUp')
       })
       window.addEventListener('keydown', (data) => {
-        if (data.code === 'KeyD') this.socket.emit('KeyDDown', this.player1.position)
-        if (data.code === 'KeyA') this.socket.emit('KeyADown', this.player1.position)
-        if (data.code === 'KeyW') this.socket.emit('KeyWDown', this.player1.position)
-        if (data.code === 'KeyS') this.socket.emit('KeySDown', this.player1.position)
-        if (data.code === 'KeyG') this.socket.emit('KeyGDown', this.player1.position)
+        if (data.code === 'KeyD') this.socket.emit('KeyDDown')
+        if (data.code === 'KeyA') this.socket.emit('KeyADown')
+        if (data.code === 'KeyW') this.socket.emit('KeyWDown')
+        if (data.code === 'KeyS') this.socket.emit('KeySDown')
+        if (data.code === 'KeyG') this.socket.emit('KeyGDown')
       })
     })
   }

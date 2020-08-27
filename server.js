@@ -25,10 +25,10 @@ socketio.on('connect', socket => {
     console.error('server is recieving: KeyADown', e)
     socket.emit('keydown', { code: 'KeyA' })
   })
-  // socket.on('KeyWDown', e => {
-  //   console.error('server is recieving: KeyWDown', e)
-  //   socket.emit('keydown', { code: 'KeyW' })
-  // })
+  socket.on('KeyWDown', e => {
+    console.error('server is recieving: KeyWDown', e)
+    socket.emit('keydown', { code: 'KeyW' })
+  })
   socket.on('KeySDown', e => {
     console.error('server is recieving: KeySDown', e)
     socket.emit('keydown', { code: 'KeyS' })
@@ -47,10 +47,10 @@ socketio.on('connect', socket => {
     console.error('server is recieving: KeyAUp', e)
     socket.emit('keyup', { code: 'KeyA' })
   })
-  // socket.on('KeyWUp', e => {
-  //   console.error('server is recieving: KeyWUp', e)
-  //   socket.emit('keyup', { code: 'KeyW' })
-  // })
+  socket.on('KeyWUp', e => {
+    console.error('server is recieving: KeyWUp', e)
+    socket.emit('keyup', { code: 'KeyW' })
+  })
   socket.on('KeySUp', e => {
     console.error('server is recieving: KeySUp', e)
     socket.emit('keyup', { code: 'KeyS' })

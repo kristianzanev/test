@@ -208,8 +208,8 @@ export default class Player1 {
         this.key.mmaKick.isDown = false
       }
     }
-    // window.addEventListener('keyup', logKeyUp)
-    // window.addEventListener('keydown', logKeyDown)
+    // window.addEventListener('keyup', this.logKeyUp)
+    // window.addEventListener('keydown', this.logKeyDown)
   }
 
   _shouldPlayAnim (actionName, inReverse = false) {
