@@ -154,25 +154,31 @@ export default class FightScene extends EventDispatcher {
     window.ticker = gsap.ticker // for testing purposes should be removed later
     gsap.ticker.add(render)
   }
+  onUserInput (data) {
+    this.socket.emit('userInput', data)
+    this._attachListeners(data)
+  }
+  _attachListeners ({ room }) {
+    window.addEventListener('keyup', (data) => {
+      if (data.code === 'KeyD') this.socket.emit('KeyDUp', { room })
+      if (data.code === 'KeyA') this.socket.emit('KeyAUp', { room })
+      if (data.code === 'KeyW') this.socket.emit('KeyWUp', { room })
+      if (data.code === 'KeyS') this.socket.emit('KeySUp', { room })
+      if (data.code === 'KeyG') this.socket.emit('KeyGUp', { room })
+    })
+    window.addEventListener('keydown', (data) => {
+      if (data.code === 'KeyD') this.socket.emit('KeyDDown', { room })
+      if (data.code === 'KeyA') this.socket.emit('KeyADown', { room })
+      if (data.code === 'KeyW') this.socket.emit('KeyWDown', { room })
+      if (data.code === 'KeyS') this.socket.emit('KeySDown', { room })
+      if (data.code === 'KeyG') this.socket.emit('KeyGDown', { room })
+    })
+  }
+
   _setupSockets () {
     this.socket = io(URL)
-    this.socket.on('connected', () => {
-      console.warn(`web-socket with id: ${this.socket.id} connected`)
-
-      window.addEventListener('keyup', (data) => {
-        if (data.code === 'KeyD') this.socket.emit('KeyDUp')
-        if (data.code === 'KeyA') this.socket.emit('KeyAUp')
-        if (data.code === 'KeyW') this.socket.emit('KeyWUp')
-        if (data.code === 'KeyS') this.socket.emit('KeySUp')
-        if (data.code === 'KeyG') this.socket.emit('KeyGUp')
-      })
-      window.addEventListener('keydown', (data) => {
-        if (data.code === 'KeyD') this.socket.emit('KeyDDown')
-        if (data.code === 'KeyA') this.socket.emit('KeyADown')
-        if (data.code === 'KeyW') this.socket.emit('KeyWDown')
-        if (data.code === 'KeyS') this.socket.emit('KeySDown')
-        if (data.code === 'KeyG') this.socket.emit('KeyGDown')
-      })
+    this.socket.on('roomCreated', ({ room, name }) => {
+      console.warn(`socket with id: ${this.socket.id} connected in room: ${room} with name: ${name}`)
     })
 
     // const name = prompt('Enter your battle name!')

@@ -4,7 +4,7 @@
     <div id='stage'>
       <HealthBar v-bind:healthStatus="this.healthBar.player1"/>
       <HealthBar position='right' v-bind:healthStatus="this.healthBar.player2"/>
-      <Modal v-on:formValidated = "formValidated" />
+      <Modal v-if="!isFormDone" v-on:formValidated = "formValidated" />
     </div>
   </div>
 </template>
@@ -31,7 +31,8 @@ export default {
           health: 100,
           name: 'player2'
         }
-      }
+      },
+      isFormDone: false
     }
   },
   mounted () {
@@ -40,9 +41,11 @@ export default {
     scene.createScene(stage)
     scene.addListener('hit', (hitPlayer) => this.$emit('healthChange', hitPlayer))
     // Modal.$on('formValidated', e => console.warn(e))
-    console.error(this)
     this.$on('healthChange', e => this.updateHealth(e))
-    this.$on('formDone', e => console.error('form is done', e))
+    this.$on('formDone', e => {
+      this.isFormDone = true
+      scene.onUserInput(e)
+    })
   },
   methods: {
     updateHealth (hitPlayer) {
