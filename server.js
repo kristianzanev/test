@@ -1,4 +1,6 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable no-path-concat */
+const { usersFind, usersJoin } = require('./src/js/utils/Users')
 const express = require('express')
 const port = process.env.PORT || 8080
 const app = express()
@@ -13,7 +15,11 @@ app.get(/.*/, function (req, res) {
 })
 
 socketio.on('connection', socket => {
-  socket.emit('connected', () => {
+  socket.on('userInput', ({ name, room }) => {
+    const user = usersJoin(socket.id, name, room)
+    socket.join(room)
+    socket.to(room).emit('connected')
+    console.warn(user)
   })
 })
 socketio.on('connect', socket => {

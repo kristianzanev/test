@@ -4,6 +4,7 @@
     <div id='stage'>
       <HealthBar v-bind:healthStatus="this.healthBar.player1"/>
       <HealthBar position='right' v-bind:healthStatus="this.healthBar.player2"/>
+      <Modal v-on:formValidated = "formValidated" />
     </div>
   </div>
 </template>
@@ -11,11 +12,13 @@
 <script>
 import FightScene from '../js/FightScene.js'
 import HealthBar from '../components/HealthBar'
+import Modal from '../components/Modal'
 
 export default {
   name: 'game',
   components: {
-    HealthBar
+    HealthBar,
+    Modal
   },
   data () {
     return {
@@ -36,12 +39,17 @@ export default {
     const scene = new FightScene()
     scene.createScene(stage)
     scene.addListener('hit', (hitPlayer) => this.$emit('healthChange', hitPlayer))
-
+    // Modal.$on('formValidated', e => console.warn(e))
+    console.error(this)
     this.$on('healthChange', e => this.updateHealth(e))
+    this.$on('formDone', e => console.error('form is done', e))
   },
   methods: {
     updateHealth (hitPlayer) {
       this.healthBar[hitPlayer.name].health = hitPlayer.health
+    },
+    formValidated (data) {
+      this.$emit('formDone', data)
     }
   }
 }

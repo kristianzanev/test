@@ -14,6 +14,7 @@ module.exports = {   root: true,
     // 'semi': [2, "always"], // enforcing the use of semicolon
     // 'no-trailing-spaces': 'off',
     // 'no-multiple-empty-lines': 'warn'
+    'no-console': ["error", { allow: ["warn", "error", "log"] }],
   },
   parserOptions: {
     parser: 'babel-eslint'

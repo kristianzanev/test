@@ -158,6 +158,7 @@ export default class FightScene extends EventDispatcher {
     this.socket = io(URL)
     this.socket.on('connected', () => {
       console.warn(`web-socket with id: ${this.socket.id} connected`)
+
       window.addEventListener('keyup', (data) => {
         if (data.code === 'KeyD') this.socket.emit('KeyDUp')
         if (data.code === 'KeyA') this.socket.emit('KeyAUp')
@@ -173,6 +174,11 @@ export default class FightScene extends EventDispatcher {
         if (data.code === 'KeyG') this.socket.emit('KeyGDown')
       })
     })
+
+    // const name = prompt('Enter your battle name!')
+    // const room = prompt('Enter room name')
+    // this.socket.emit('userInput', { name, room })
+    console.error('userInput')
   }
 
   _getServerResponse (player) {
