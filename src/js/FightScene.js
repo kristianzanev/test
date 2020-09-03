@@ -6,6 +6,7 @@ import CollisionEngine from './utils/CollisionEngine'
 import EventDispatcher from './utils/EventDispatcher'
 import { gsap } from 'gsap'
 import io from 'socket.io-client'
+import { Config } from '../Config'
 
 const THREE = window.THREE = require('three')
 require('three/examples/js/loaders/FBXLoader')
@@ -27,6 +28,7 @@ export default class FightScene extends EventDispatcher {
     this.mixer = null
     this.player1 = null
     this.box = null
+    this.selectedPlayerNum = null
     this.manager = new THREE.LoadingManager() /// for loading progress
     this.collisionEngine = new CollisionEngine({
       THREEVector3: THREE.Vector3,
@@ -104,7 +106,6 @@ export default class FightScene extends EventDispatcher {
       this.scene.add(Object3D)
 
       this.objScene.push({ Object3D, mixer, clock: new THREE.Clock() })
-      this._getServerResponse(this.player1)
     }, undefined, error => {
       throw (error)
       // console.error(error)
@@ -150,52 +151,47 @@ export default class FightScene extends EventDispatcher {
       this.player2.handleRotationSwitch(this.player1.position.x)
       this.renderer.render(this.scene, this.camera)
     }
-    // gsap.ticker.fps(5)
-    window.ticker = gsap.ticker // for testing purposes should be removed later
     gsap.ticker.add(render)
   }
   onUserInput (data) {
     this.socket.emit('userInput', data)
-    this._attachListeners(data)
   }
-  _attachListeners ({ room }) {
-    window.addEventListener('keyup', (data) => {
-      if (data.code === 'KeyD') this.socket.emit('KeyDUp', { room })
-      if (data.code === 'KeyA') this.socket.emit('KeyAUp', { room })
-      if (data.code === 'KeyW') this.socket.emit('KeyWUp', { room })
-      if (data.code === 'KeyS') this.socket.emit('KeySUp', { room })
-      if (data.code === 'KeyG') this.socket.emit('KeyGUp', { room })
+  _attachKeyboardListeners ({ room } = {}) {
+    window.addEventListener('keyup', ({ code }) => {
+      const selectedPlayerKeys = Config['player' + this.selectedPlayerNum].keys[code]
+
+      if (selectedPlayerKeys) this.socket.emit('keyup', { room, code, selectedPlayer: this.selectedPlayerNum })
     })
-    window.addEventListener('keydown', (data) => {
-      if (data.code === 'KeyD') this.socket.emit('KeyDDown', { room })
-      if (data.code === 'KeyA') this.socket.emit('KeyADown', { room })
-      if (data.code === 'KeyW') this.socket.emit('KeyWDown', { room })
-      if (data.code === 'KeyS') this.socket.emit('KeySDown', { room })
-      if (data.code === 'KeyG') this.socket.emit('KeyGDown', { room })
+    window.addEventListener('keydown', ({ code }) => {
+      const selectedPlayerKeys = Config['player' + this.selectedPlayerNum].keys[code]
+
+      if (selectedPlayerKeys) this.socket.emit('keydown', { room, code, selectedPlayer: this.selectedPlayerNum })
     })
   }
 
   _setupSockets () {
     this.socket = io(URL)
-    this.socket.on('roomCreated', ({ room, name }) => {
+    this._handleServerResponse()
+
+    this.socket.on('roomJoined', ({ room, name, clientsCount }) => {
       console.warn(`socket with id: ${this.socket.id} connected in room: ${room} with name: ${name}`)
+
+      if (!this.selectedPlayerNum) {
+        this.selectedPlayerNum = clientsCount
+        this._attachKeyboardListeners({ room })
+        console.error('attachingKeyboard to player', this.selectedPlayerNum)
+      }
     })
 
-    // const name = prompt('Enter your battle name!')
-    // const room = prompt('Enter room name')
-    // this.socket.emit('userInput', { name, room })
     console.error('userInput')
   }
 
-  _getServerResponse (player) {
+  _handleServerResponse () {
     this.socket.on('keyup', (e) => {
-      console.error('client is recieving: keyupServe', e)
-      player.logKeyUp(e)
+      this['player' + e.selectedPlayer].logKeyUp(e)
     })
     this.socket.on('keydown', (e) => {
-      console.error('client is recieving: keydownServe', e)
-
-      player.logKeyDown(e)
+      this['player' + e.selectedPlayer].logKeyDown(e)
     })
   }
 
