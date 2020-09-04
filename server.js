@@ -36,16 +36,16 @@ io.on('connection', socket => {
   })
 })
 io.on('connect', socket => {
-  socket.on('keydown', ({ room, code, selectedPlayer }) => {
-    console.error('server is recieving: keydown', { room, code, selectedPlayer }) // add additional security check for which key code is send from player
-    io.sockets.to(room).emit('keydown', { code, selectedPlayer })
+  socket.on('keydown', ({ room, code, playerNum, position }) => {
+    console.error('server is recieving: keydown', { room, code, playerNum, position }) // add additional security check for which key code is send from player
+    socket.broadcast.to(room).emit('keydown', { code, playerNum, position }) // emitting to all clients in room except the sender
   })
   //  asd
   // asd
 
-  socket.on('keyup', ({ room, code, selectedPlayer }) => {
-    console.error('server is recieving: keyup', { room, code, selectedPlayer }) // add additional security check for which key code is send from player
-    io.sockets.to(room).emit('keyup', { code, selectedPlayer })
+  socket.on('keyup', ({ room, code, playerNum, position }) => {
+    console.error('server is recieving: keyup', { room, code, playerNum, position }) // add additional security check for which key code is send from player
+    socket.broadcast.to(room).emit('keyup', { code, playerNum, position }) // emitting to all clients in room except the sender
   })
 })
 

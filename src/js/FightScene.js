@@ -28,7 +28,7 @@ export default class FightScene extends EventDispatcher {
     this.mixer = null
     this.player1 = null
     this.box = null
-    this.selectedPlayer = null
+    this.playerNum = null
     this.manager = new THREE.LoadingManager() /// for loading progress
     this.collisionEngine = new CollisionEngine({
       THREEVector3: THREE.Vector3,
@@ -161,28 +161,31 @@ export default class FightScene extends EventDispatcher {
    * @description - on keyup, keydown events sends info to server for the selected player
    */
   _sendControllsToServer ({ room } = {}) {
-    const playerKeys = Config['player' + this.selectedPlayer].keys
+    const playerKeys = Config['player' + this.playerNum].keys
     const controlsValues = Object.values(playerKeys)
     const controlsEntries = Object.entries(playerKeys)
+    const targetPlayer = this['player' + this.playerNum]
 
     window.addEventListener('keyup', ({ code }) => {
       if (controlsValues.includes(code)) {
         const position = (code === playerKeys.left || code === playerKeys.right) &&
-        { x: this['player' + this.selectedPlayer].position.x }
+          { x: targetPlayer.position.x }
 
-        this.socket.emit('keyup', { room, code, selectedPlayer: this.selectedPlayer, position })
+        targetPlayer.logKeyUp({ code })
+        this.socket.emit('keyup', { room, code, playerNum: this.playerNum, position })
       }
     })
 
     window.addEventListener('keydown', ({ code }) => {
       if (controlsValues.includes(code)) {
         const position = (code === playerKeys.left || code === playerKeys.right) &&
-        { x: this['player' + this.selectedPlayer].position.x }
+          { x: targetPlayer.position.x }
 
         const mathingKeyType = controlsEntries.find(([type, value]) => value === code)[0]
-        const isKeyPressed = this['player' + this.selectedPlayer].key[mathingKeyType].isDown
+        const isKeyPressed = targetPlayer.key[mathingKeyType].isDown
 
-        !isKeyPressed && this.socket.emit('keydown', { room, code, selectedPlayer: this.selectedPlayer, position })
+        !isKeyPressed && this.socket.emit('keydown', { room, code, playerNum: this.playerNum, position })
+        targetPlayer.logKeyDown({ code })
       }
     })
   }
@@ -194,10 +197,10 @@ export default class FightScene extends EventDispatcher {
     this.socket.on('roomJoined', ({ room, name, clientsCount }) => {
       console.warn(`socket with id: ${this.socket.id} connected in room: ${room} with name: ${name}`)
 
-      if (!this.selectedPlayer) {
-        this.selectedPlayer = clientsCount
+      if (!this.playerNum) {
+        this.playerNum = clientsCount
         this._sendControllsToServer({ room })
-        console.error('attachingKeyboard to player', this.selectedPlayer)
+        console.error('attachingKeyboard to player', this.playerNum)
       }
     })
 
@@ -205,11 +208,17 @@ export default class FightScene extends EventDispatcher {
   }
 
   _handleServerResponse () {
-    this.socket.on('keyup', (e) => {
-      this['player' + e.selectedPlayer].logKeyUp(e)
+    this.socket.on('keyup', (e) => { // should recevie keyboard events only for opposite player
+      const oppositePlayer = this['player' + e.playerNum]
+      console.error('oppositePlayer', e.playerNum, e.position)
+      if (e.position) oppositePlayer.position.x = e.position.x
+      oppositePlayer.logKeyUp(e)
     })
-    this.socket.on('keydown', (e) => {
-      this['player' + e.selectedPlayer].logKeyDown(e)
+    this.socket.on('keydown', (e) => { // should recevie keyboard events only for opposite player
+      const oppositePlayer = this['player' + e.playerNum]
+      console.error('oppositePlayer', e.playerNum, e.position)
+      if (e.position) oppositePlayer.position.x = e.position.x
+      oppositePlayer.logKeyDown(e)
     })
   }
 
