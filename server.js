@@ -22,7 +22,7 @@ io.on('connection', socket => {
         console.error('Error when checking clients')
         return
       }
-      const maxJoinedClients = 1
+      const maxJoinedClients = 1 // joined clients before connecting current client
       const clientsCount = clients.length
 
       if (clientsCount <= maxJoinedClients) {
@@ -37,14 +37,14 @@ io.on('connection', socket => {
 })
 io.on('connect', socket => {
   socket.on('keydown', ({ room, code, selectedPlayer }) => {
-    console.error('server is recieving: keydown', { room, code, selectedPlayer }) // additional security check for which key code is send from player
+    console.error('server is recieving: keydown', { room, code, selectedPlayer }) // add additional security check for which key code is send from player
     io.sockets.to(room).emit('keydown', { code, selectedPlayer })
   })
   //  asd
   // asd
 
   socket.on('keyup', ({ room, code, selectedPlayer }) => {
-    console.error('server is recieving: keyup', { room, code, selectedPlayer }) // additional security check for which key code is send from player
+    console.error('server is recieving: keyup', { room, code, selectedPlayer }) // add additional security check for which key code is send from player
     io.sockets.to(room).emit('keyup', { code, selectedPlayer })
   })
 })

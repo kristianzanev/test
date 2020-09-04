@@ -1,13 +1,15 @@
 /* eslint-disable no-mixed-operators */
 import { TimelineLite, TweenLite, gsap } from 'gsap/all'
-
-const Config = {
-  speed: 7,
-  jumpLength: 200,
-  spawnPosition: -200,
-  moveMultiplier: 50,
-  speedInCollision: 4
-}
+// import Config from '../../Config'
+import { Config } from '../../Config'
+const { settings, keys } = Config.player1
+// const Config = {
+//   speed: 7,
+//   jumpLength: 200,
+//   spawnPosition: -200,
+//   moveMultiplier: 50,
+//   speedInCollision: 4
+// }
 
 // const States = {
 //   attack: 'attack',
@@ -16,34 +18,18 @@ const Config = {
 // }
 
 export default class Player1 {
-  constructor (Object3D, mixer, THREELoopOnce, speed = Config.speed) {
+  constructor (Object3D, mixer, THREELoopOnce) {
     this.Object3D = Object3D
     this.mixer = mixer
     this.THREELoopOnce = THREELoopOnce
-    this.speed = speed
-    this.defaultSpeed = Config.speed
-    this.jumpLength = Config.jumpLength
+    this.speed = settings.speed
+    this.speedInCollision = settings.speedInCollision
+    this.jumpLength = settings.jumpLength
+    this.moveMultiplier = settings.moveMultiplier
     this._activeAction = null
     this.actions = {}
     this.actionNames = null
-    this.key = {
-      left: {
-        isDown: false,
-        code: 'KeyA'
-      },
-      jump: {
-        isDown: false,
-        code: 'KeyW'
-      },
-      right: {
-        isDown: false,
-        code: 'KeyD'
-      },
-      mmaKick: {
-        isDown: false,
-        code: 'KeyG'
-      }
-    }
+    this.key = this.generateControls(keys)
     this.isSwitchedBefore = false
     this.isSwitchOn = false // for switching animations for the other player orientation
     this.default = {
@@ -52,11 +38,10 @@ export default class Player1 {
         opposite: { y: 4.5 }
       },
       position: {
-        x: Config.spawnPosition
+        x: settings.spawnPosition
       }
     }
     this.timeline = new TimelineLite()
-    this.moveTimeline = new TimelineLite()
     this._playingAnim = {}
     this._health = 100
 
@@ -180,12 +165,12 @@ export default class Player1 {
         }
         this.moveLeft()
       }
-      if (event.code === this.key.jump.code) {
-        this.key.jump.isDown = true
+      if (event.code === this.key.up.code) {
+        this.key.up.isDown = true
         this.jump()
       }
-      if (event.code === this.key.mmaKick.code) {
-        this.key.mmaKick.isDown = true
+      if (event.code === this.key.kick.code) {
+        this.key.kick.isDown = true
         this.mmaKick()
       }
     }
@@ -201,11 +186,11 @@ export default class Player1 {
         if (this.key.right.isDown) this.moveRight() // in case if player holds a,d or a,w then releases one of the keys, otherwise idle animation will play
         else if (!this.key.right.isDown) this.idle()
       }
-      if (event.code === this.key.jump.code) {
-        this.key.jump.isDown = false
+      if (event.code === this.key.up.code) {
+        this.key.up.isDown = false
       }
-      if (event.code === this.key.mmaKick.code) {
-        this.key.mmaKick.isDown = false
+      if (event.code === this.key.kick.code) {
+        this.key.kick.isDown = false
       }
     }
     // window.addEventListener('keyup', this.logKeyUp)
@@ -232,7 +217,7 @@ export default class Player1 {
     const isInLeftSide = this.position.x <= player2.position.x
     const isInRightSide = this.position.x > player2.position.x
 
-    const moveDistance = this._moveDistancePerFrame() / Config.speedInCollision
+    const moveDistance = this._moveDistancePerFrame() / this.speedInCollision
 
     if (isInLeftSide) {
       if (isMovingRight) player2.position.x += moveDistance
@@ -310,7 +295,20 @@ export default class Player1 {
 
   _moveDistancePerFrame () {
     const passedTimeBetweenFrames = this._prevTime ? this._currentTime - this._prevTime : 0
-    return passedTimeBetweenFrames * (this.speed * Config.moveMultiplier)
+    return passedTimeBetweenFrames * (this.speed * this.moveMultiplier)
+  }
+  generateControls (passedKeys) {
+    const configKeys = Object.entries(passedKeys)
+    let result = {}
+
+    configKeys.forEach(([type, keyValue]) => {
+      result[type] = {
+        isDown: false,
+        code: keyValue
+      }
+    })
+
+    return result
   }
   removeHealth (amount) {
     this._health = this._health - amount <= 0 ? this._health = 0 : this._health - amount

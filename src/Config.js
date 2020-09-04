@@ -1,20 +1,34 @@
 export const Config = {
   player1: {
     keys: {
-      'KeyA': 'KeyA',
-      'KeyW': 'KeyW',
-      'KeyD': 'KeyD',
-      'KeyS': 'KeyS',
-      'KeyG': 'KeyG'
+      left: 'KeyA',
+      up: 'KeyW',
+      right: 'KeyD',
+      down: 'KeyS',
+      kick: 'KeyG'
+    },
+    settings: {
+      speed: 7,
+      jumpLength: 200,
+      spawnPosition: -200,
+      moveMultiplier: 50,
+      speedInCollision: 4
     }
   },
   player2: {
     keys: {
-      'KeyJ': 'KeyJ',
-      'KeyI': 'KeyI',
-      'KeyL': 'KeyL',
-      'KeyK': 'KeyK',
-      'KeyN': 'KeyN'
+      left: 'KeyJ',
+      up: 'KeyI',
+      right: 'KeyL',
+      down: 'KeyK',
+      kick: 'KeyN'
+    },
+    settings: {
+      speed: 7,
+      jumpLength: 200,
+      spawnPosition: 200,
+      moveMultiplier: 50,
+      speedInCollision: 4
     }
   }
 }
