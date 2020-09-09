@@ -19,7 +19,7 @@ export default class FightScene extends EventDispatcher {
   constructor () {
     super()
     this.objScene = []
-    this.modelPath = { // assets are in public folder, but are copied from webpack thats why there isn't the word 'public' in the path
+    this.modelPath = { // assets are in public folder, but are copied with webpack to /dist thats why there isn't the word 'public' in the path
       // player: '/animations/dummy6.fbx',
       // player: '/animations/modelHitboxes.fbx'
       player: URL + '/animations/multiple_hiboxes_convexHull2.fbx'
@@ -39,7 +39,7 @@ export default class FightScene extends EventDispatcher {
     this._setupSockets() // necessary to listen for sockets events in constructor
   }
 
-  createScene (stage) { // TODO make an init function which is invoked in this class
+  createScene (stage) {
     this.scene = new THREE.Scene()
     this.camera = new THREE.PerspectiveCamera(
       45,
@@ -64,18 +64,18 @@ export default class FightScene extends EventDispatcher {
     light.position.set(0, 100, 150)
     this.scene.add(light)
 
-    this.init()
+    // this._load()
   }
-  async init () {
-    this.loadAssets()
-    await this.handleLoadingProgress()
+  async _load () {
+    this._loadAssets()
+    await this._handleLoadingProgress()
     this.collisionEngine.addElements([
       this.player1,
       this.player2
     ])
-    this.startAnimation()
+    this._startAnimation()
   }
-  handleLoadingProgress () {
+  _handleLoadingProgress () {
     return new Promise((resolve, reject) => {
       this.manager.onStart = function (url, itemsLoaded, itemsTotal) {
         // console.log('Started loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.')
@@ -92,10 +92,9 @@ export default class FightScene extends EventDispatcher {
         // eslint-disable-next-line prefer-promise-reject-errors
         reject(url)
       }
-      window.loaderManager = this.manager // for debugging purposes should be deleted
     })
   }
-  loadAssets () {
+  _loadAssets () {
     const loader = new THREE.FBXLoader(this.manager)
 
     loader.load(this.modelPath.player, Object3D => { // TODO to load second player or find a way to clone the Object3D or copy and  load the file
@@ -133,7 +132,7 @@ export default class FightScene extends EventDispatcher {
     })
   }
 
-  startAnimation () {
+  _startAnimation () {
     this.collisionEngine.elements.forEach(player => {
       player.boxes3.forEach(box3 => this.scene.add(new THREE.Box3Helper(box3, 0x00ff00)))
     })
@@ -160,7 +159,7 @@ export default class FightScene extends EventDispatcher {
   /**
    * @description - on keyup, keydown events sends info to server for the selected player
    */
-  _sendControllsToServer ({ room } = {}) {
+  _sendControllsToServer (room) {
     const playerKeys = Config['player' + this.playerNum].keys
     const controlsValues = Object.values(playerKeys)
     const controlsEntries = Object.entries(playerKeys)
@@ -169,7 +168,7 @@ export default class FightScene extends EventDispatcher {
     window.addEventListener('keyup', ({ code }) => {
       if (controlsValues.includes(code)) {
         const position = (code === playerKeys.left || code === playerKeys.right) &&
-          { x: targetPlayer.position.x }
+          { x: +(targetPlayer.position.x).toFixed(3) }
 
         targetPlayer.logKeyUp({ code })
         this.socket.emit('keyup', { room, code, playerNum: this.playerNum, position })
@@ -179,7 +178,7 @@ export default class FightScene extends EventDispatcher {
     window.addEventListener('keydown', ({ code }) => {
       if (controlsValues.includes(code)) {
         const position = (code === playerKeys.left || code === playerKeys.right) &&
-          { x: targetPlayer.position.x }
+          { x: +(targetPlayer.position.x).toFixed(3) }
 
         const mathingKeyType = controlsEntries.find(([type, value]) => value === code)[0]
         const isKeyPressed = targetPlayer.key[mathingKeyType].isDown
@@ -194,29 +193,26 @@ export default class FightScene extends EventDispatcher {
     this.socket = io(URL)
     this._handleServerResponse()
 
-    this.socket.on('roomJoined', ({ room, name, clientsCount }) => {
+    this.socket.on('roomJoined', async ({ room, name, clientsCount }) => { // roomJoined is called every time someone joins the room
       console.warn(`socket with id: ${this.socket.id} connected in room: ${room} with name: ${name}`)
 
       if (!this.playerNum) {
         this.playerNum = clientsCount
-        this._sendControllsToServer({ room })
+        await this._load()
+        this._sendControllsToServer(room)
         console.error('attachingKeyboard to player', this.playerNum)
       }
     })
-
-    console.error('userInput')
   }
 
   _handleServerResponse () {
     this.socket.on('keyup', (e) => { // should recevie keyboard events only for opposite player
       const oppositePlayer = this['player' + e.playerNum]
-      console.error('oppositePlayer', e.playerNum, e.position)
       if (e.position) oppositePlayer.position.x = e.position.x
       oppositePlayer.logKeyUp(e)
     })
     this.socket.on('keydown', (e) => { // should recevie keyboard events only for opposite player
       const oppositePlayer = this['player' + e.playerNum]
-      console.error('oppositePlayer', e.playerNum, e.position)
       if (e.position) oppositePlayer.position.x = e.position.x
       oppositePlayer.logKeyDown(e)
     })
